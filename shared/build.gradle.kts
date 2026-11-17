@@ -1,0 +1,101 @@
+import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+plugins {
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.androidMultiplatformLibrary)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
+}
+
+kotlin {
+    listOf(
+        iosArm64(),
+        iosSimulatorArm64()
+    ).forEach { iosTarget ->
+        iosTarget.binaries.framework {
+            baseName = "Shared"
+            isStatic = true
+        }
+    }
+    jvm()
+    js {
+        browser()
+        binaries.executable()
+    }
+    @OptIn(ExperimentalWasmDsl::class)
+    wasmJs {
+        browser()
+        binaries.executable()
+    }
+    android {
+       namespace = "com.ugurbuga.inspectodemo.shared"
+       compileSdk = libs.versions.android.compileSdk.get().toInt()
+       minSdk = libs.versions.android.minSdk.get().toInt()
+       compilerOptions {
+           jvmTarget = JvmTarget.JVM_11
+       }
+       androidResources {
+           enable = true
+       }
+       withHostTest {
+           isIncludeAndroidResources = true
+       }
+       withDeviceTestBuilder {
+           sourceSetTreeName = "test"
+       }.configure {
+           instrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+       }
+    }
+    sourceSets {
+        androidMain.dependencies {
+            api(compose.uiTooling)
+            api(libs.compose.uiToolingPreview)
+            api(libs.androidx.activity.compose)
+            api(libs.ktor.client.cio)
+        }
+        commonMain.dependencies {
+            api(project(":inspecto"))
+            api(compose.runtime)
+            api(compose.foundation)
+            api(compose.material3)
+            api(compose.materialIconsExtended)
+            api(compose.ui)
+            api(libs.compose.uiToolingPreview)
+            api(compose.components.resources)
+            api(libs.androidx.lifecycle.viewmodelCompose)
+            api(libs.androidx.lifecycle.runtimeCompose)
+            api(libs.kotlinx.serialization.json)
+            api(libs.kotlinx.datetime)
+            api(libs.ktor.client.core)
+            api(libs.ktor.client.content.negotiation)
+            api(libs.ktor.serialization.kotlinx.json)
+            api(libs.coil.compose)
+            api(libs.coil.network.ktor3)
+            api(libs.coil.svg)
+        }
+        iosMain.dependencies {
+            api(libs.ktor.client.darwin)
+        }
+        jvmMain.dependencies {
+            api(compose.uiTooling)
+            api(libs.compose.uiToolingPreview)
+            api(libs.ktor.client.cio)
+        }
+        jsMain.dependencies {
+            api(libs.wrappers.browser)
+            api(libs.ktor.client.js)
+        }
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
+        getByName("androidDeviceTest").dependencies {
+            implementation(libs.androidx.testRunner)
+        }
+    }
+}
+
+dependencies {
+    androidRuntimeClasspath(compose.uiTooling)
+}

@@ -1,108 +1,97 @@
 # Inspecto 🔍
 
-**Inspecto** is a lightweight, Chucker-inspired, feature-rich HTTP network inspector library built for **Kotlin Multiplatform (KMP)**. It allows developers to monitor, inspect, search, filter, and debug network traffic (HTTP requests, responses, headers, query parameters, latency, and payloads) directly on Android, Desktop (JVM), iOS, and Web.
-
----
-
-## ✨ Features
-
-- **Multiplatform Support**: Works seamlessly across Android, JVM/Desktop, iOS, and Web (JS / WasmJS).
-- **Chucker-Inspired UI**: Beautiful Material 3 UI with dark/light theme awareness, status badges, and summary statistics.
-- **Ktor & OkHttp Integration**: Out-of-the-box interceptor and plugin support for logging requests from Ktor and OkHttp clients.
-- **Demo Flow / Mock Data**: Instant one-tap demo loading (`Inspecto.addDemoLogs()`) for testing and UI previews.
-- **Virtualized JSON Syntax Highlighter**: Smooth, non-blocking lazy rendering for large JSON payloads (300KB+) with color-coded syntax highlighting.
-- **cURL & URL Exporters**: One-tap copy for cURL commands, request URLs, headers, and payloads.
-- **Shake-to-Open (Android)**: Automatically opens the inspector when shaking the physical device.
-- **Collapsible Headers & Query Parameters**: Clean, organized collapsible views for request/response headers and query parameters.
-- **Search & Filter Chips**: Filter traffic instantly by HTTP method (`GET`, `POST`, etc.) or status code (`2XX`, `ERR`).
-
----
-
-## 📦 Installation & Versioning
-
-Inspecto follows alpha release management (`1.0.0-alpha01`). Add Inspecto to your project via **JitPack**:
-
-```kotlin
-repositories {
-    maven { url = uri("https://jitpack.io") }
-}
-
-dependencies {
-    implementation("com.github.ugurbuga:inspecto:1.0.0-alpha01")
-}
-```
+**Inspecto** is a standalone, lightweight Kotlin Multiplatform (KMP) network inspection library inspired by Chucker. It enables real-time HTTP request & response logging, search filtering, payload formatting, syntax highlighting, and granular copying/sharing across **Android**, **Desktop (JVM)**, **iOS**, and **Web (Wasm/JS)**.
 
 ---
 
 ## 🚀 Quick Start & Usage
 
-### 1. Demo Flow (Try Instantly)
-To populate demo network traffic (GET/POST/Error payloads) for UI testing and demos:
-```kotlin
-import com.ugurbuga.inspecto.Inspecto
+### 1. Launching Inspecto UI
+Inspecto features zero-configuration startup on Android. Simply call:
 
-// Load mock demo logs
-Inspecto.addDemoLogs()
+```kotlin
+import com.ugurbuga.inspecto.launchInspecto
+
+// On Android, launchInspecto() automatically manages ApplicationContext
+launchInspecto()
 ```
 
-### 2. Ktor Client Integration
-Install the logger in your Ktor `HttpClient`:
-
+Or invoke via `Inspecto.launch()`:
 ```kotlin
 import com.ugurbuga.inspecto.Inspecto
 
-val httpClient = HttpClient(CIO) {
-    install(ResponseObserver) {
-        onResponse { response ->
-            Inspecto.addLog(
-                url = response.call.request.url.toString(),
-                method = response.call.request.method.value,
-                statusCode = response.status.value,
-                durationMs = 120L,
-                responseBody = response.bodyAsText()
-            )
-        }
+Inspecto.launch()
+```
+
+---
+
+### 2. Logging Network Calls
+
+#### Manual Logging
+```kotlin
+import com.ugurbuga.inspecto.Inspecto
+
+Inspecto.addLog(
+    url = "https://api.example.com/v1/users",
+    method = "GET",
+    statusCode = 200,
+    durationMs = 120L,
+    requestHeaders = mapOf("Authorization" to "Bearer token123"),
+    requestQueryParams = mapOf("page" to "1"),
+    responseHeaders = mapOf("Content-Type" to "application/json"),
+    responseBody = """{"status": "ok", "users": []}"""
+)
+```
+
+#### OkHttp Integration (Android)
+```kotlin
+import com.ugurbuga.inspecto.InspectoOkHttpInterceptor
+
+InspectoOkHttpInterceptor.logCall(
+    url = request.url.toString(),
+    method = request.method,
+    statusCode = response.code,
+    durationMs = durationMs,
+    requestHeaders = requestHeadersMap,
+    responseHeaders = responseHeadersMap,
+    responseBody = bodyString
+)
+```
+
+---
+
+## ✨ Features
+
+- **Zero-Config Context**: Uses Android `ContentProvider` (`InspectoInitProvider`) to auto-capture `ApplicationContext`.
+- **Top-Level `launchInspecto()` API**: Clean and concise entry point across all target platforms.
+- **Combined 3-Section Share Format**: Copies Overview, Request, and Response stacked cleanly as plain text.
+- **Granular Copying**:
+  - **Tab-level Copy**: Copy active tab summary (Overview, Request, or Response).
+  - **Sub-block Copy**: Copy Request Headers, Query Parameters, Request Body, Response Headers, or Response Body independently with 1-click feedback.
+- **JSON Syntax Highlighting**: Color-coded JSON formatter with non-blocking background parsing.
+- **Encapsulated Architecture**: Public facade (`Inspecto`, `InspectoLogEntry`, `launchInspecto`) hides internal UI and helper components (`internal`).
+
+---
+
+## 📦 Distribution & Dependency Configuration
+
+Add JitPack repository to `settings.gradle.kts`:
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        maven { url = uri("https://jitpack.io") }
     }
 }
 ```
 
-### 3. OkHttp Client Integration
-Use the provided `OkHttpNetworkInspectorInterceptor` for OkHttp clients:
-
+Add dependency to `build.gradle.kts`:
 ```kotlin
-import com.ugurbuga.inspecto.OkHttpNetworkInspectorInterceptor
-
-val okHttpClient = OkHttpClient.Builder()
-    .addInterceptor(OkHttpNetworkInspectorInterceptor)
-    .build()
-```
-
-### 4. Manual Launch & Shake-to-Open (Android)
-Launch Inspecto programmatically or enable shake-to-open:
-
-```kotlin
-import com.ugurbuga.inspecto.launchNetworkInspector
-
-// Programmatic launch
-launchNetworkInspector(context)
+dependencies {
+    implementation("com.github.ugurbuga:inspecto:1.0.0")
+}
 ```
 
 ---
 
 ## 📄 License
-
-```text
-Copyright 2026 Uğur Buğa
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License.
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-```
+Licensed under the Apache License 2.0.

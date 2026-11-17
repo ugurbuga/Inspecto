@@ -1,18 +1,33 @@
 # Gradle
 .gradle/
 build/
+**/build/
 !gradle/wrapper/gradle-wrapper.jar
 
-# IDE
+# Kotlin & Multiplatform build caches
+.kotlin/
+kotlin-js-store/
+.kotlin-js-store/
+
+# IDE & Project files
 .idea/
 *.iml
 *.iws
 *.ipr
 .vscode/
 
-# Local configuration
+# Local & Environment Configuration
 local.properties
+*.keystore
+*.jks
+*.apk
+*.aab
 
 # OS files
 .DS_Store
 Thumbs.db
+
+# AI & Docs
+AGENTS.md
+agents.md
+docs/
