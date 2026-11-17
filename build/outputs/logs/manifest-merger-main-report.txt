@@ -1,0 +1,35 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:2:1-15:12
+INJECTED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:2:1-15:12
+	package
+		INJECTED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:2:11-69
+application
+ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:3:5-14:19
+activity#com.ugurbuga.turkishtvtracker.networkinspector.NetworkInspectorActivity
+ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:4:9-8:49
+	android:label
+		ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:8:13-46
+	android:exported
+		ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:6:13-36
+	android:theme
+		ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:7:13-70
+	android:name
+		ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:5:13-99
+provider#com.ugurbuga.turkishtvtracker.networkinspector.NetworkInspectorInitProvider
+ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:9:9-13:39
+	android:authorities
+		ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:11:13-80
+	android:exported
+		ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:12:13-37
+	android:initOrder
+		ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:13:13-36
+	android:name
+		ADDED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:10:13-103
+uses-sdk
+INJECTED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml

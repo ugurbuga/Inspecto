@@ -1,0 +1,34 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+3    package="com.ugurbuga.turkishtvtracker.networkinspector" >
+4
+5    <uses-sdk android:minSdkVersion="24" />
+5-->INJECTED
+5-->INJECTED
+6
+7    <application>
+7-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:3:5-14:19
+8        <activity
+8-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:4:9-8:49
+9            android:name="com.ugurbuga.turkishtvtracker.networkinspector.NetworkInspectorActivity"
+9-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:5:13-99
+10            android:exported="true"
+10-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:6:13-36
+11            android:label="Network Inspector"
+11-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:8:13-46
+12            android:theme="@android:style/Theme.Material.NoActionBar" />
+12-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:7:13-70
+13
+14        <provider
+14-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:9:9-13:39
+15            android:name="com.ugurbuga.turkishtvtracker.networkinspector.NetworkInspectorInitProvider"
+15-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:10:13-103
+16            android:authorities="${applicationId}.networkinspectorinitprovider"
+16-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:11:13-80
+17            android:exported="false"
+17-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:12:13-37
+18            android:initOrder="100" />
+18-->/Users/ugurbuga/AndroidStudioProjects/TurkishTvTracker/networkinspector/src/androidMain/AndroidManifest.xml:13:13-36
+19    </application>
+20
+21</manifest>
