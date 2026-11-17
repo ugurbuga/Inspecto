@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		8DE563D3349474F31BD1BAE8 /* TurkishTvTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TurkishTvTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DE563D3349474F31BD1BAE8 /* InspectoDemo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = InspectoDemo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -59,7 +59,7 @@
 		4AD75A9199A6BE8BD9CEB45A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				8DE563D3349474F31BD1BAE8 /* TurkishTvTracker.app */,
+				8DE563D3349474F31BD1BAE8 /* InspectoDemo.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,7 +87,7 @@
 			packageProductDependencies = (
 			);
 			productName = iosApp;
-			productReference = 8DE563D3349474F31BD1BAE8 /* TurkishTvTracker.app */;
+			productReference = 8DE563D3349474F31BD1BAE8 /* InspectoDemo.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */

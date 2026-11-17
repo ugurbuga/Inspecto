@@ -8,7 +8,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "1268EDB3F224CB6BD204F857"
-               BuildableName = "TurkishTvTracker.app"
+               BuildableName = "InspectoDemo.app"
                BlueprintName = "iosApp"
                ReferencedContainer = "container:iosApp.xcodeproj">
             </BuildableReference>
@@ -23,7 +23,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1268EDB3F224CB6BD204F857"
-            BuildableName = "TurkishTvTracker.app"
+            BuildableName = "InspectoDemo.app"
             BlueprintName = "iosApp"
             ReferencedContainer = "container:iosApp.xcodeproj">
          </BuildableReference>
