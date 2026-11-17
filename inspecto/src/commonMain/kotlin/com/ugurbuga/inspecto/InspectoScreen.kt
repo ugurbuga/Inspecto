@@ -1,6 +1,7 @@
 package com.ugurbuga.inspecto
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -100,6 +101,7 @@ private fun InspectoScreenContent(
                 entry.url.contains(searchQuery, ignoreCase = true) ||
                         entry.method.contains(searchQuery, ignoreCase = true) ||
                         entry.statusCode.toString().contains(searchQuery) ||
+                        entry.tag.contains(searchQuery, ignoreCase = true) ||
                         (entry.requestBody?.contains(searchQuery, ignoreCase = true) == true) ||
                         (entry.responseBody?.contains(searchQuery, ignoreCase = true) == true)
             }
@@ -233,7 +235,7 @@ private fun InspectoScreenContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 12.dp, vertical = 4.dp),
-                        placeholder = { Text("Filter by URL, Status, Payload...", style = MaterialTheme.typography.bodySmall) },
+                        placeholder = { Text("Filter by URL, Status, Tag, Payload...", style = MaterialTheme.typography.bodySmall) },
                         leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", modifier = Modifier.size(18.dp)) },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
@@ -463,6 +465,27 @@ private fun TransactionCard(
                         )
                     }
 
+                    val tagBg = when {
+                        entry.tag.contains("Ktor", ignoreCase = true) -> Color(0xFF8B5CF6) // Purple
+                        entry.tag.contains("OkHttp", ignoreCase = true) -> Color(0xFFF59E0B) // Amber
+                        entry.tag.equals("Manual", ignoreCase = true) -> Color(0xFF0284C7) // Blue
+                        else -> Color(0xFF10B981) // Emerald Green for custom tags
+                    }
+
+                    // Tag Badge
+                    Surface(
+                        color = tagBg,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = entry.tag,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+
                     Surface(
                         color = statusBg.copy(alpha = 0.15f),
                         shape = RoundedCornerShape(4.dp),
@@ -578,7 +601,7 @@ internal fun InspectoDetailScreen(
                             )
                         }
 
-                        // 2. Native System Share (Android / iOS share sheet)
+                        // 2. Native System Share
                         IconButton(onClick = {
                             val fullText = entry.toFormattedLogText()
                             shareText(fullText, "Inspecto Log - ${entry.method} ${entry.path}")
@@ -596,27 +619,36 @@ internal fun InspectoDetailScreen(
                     )
                 )
 
-                ScrollableTabRow(
-                    selectedTabIndex = pagerState.currentPage,
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                    edgePadding = 16.dp
+                // Separated Pill Tabs ("ayrık olsunlar")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Tab(
-                        selected = pagerState.currentPage == 0,
-                        onClick = { coroutineScope.launch { pagerState.animateScrollToPage(0) } },
-                        text = { Text("OVERVIEW", fontWeight = FontWeight.Bold) }
-                    )
-                    Tab(
-                        selected = pagerState.currentPage == 1,
-                        onClick = { coroutineScope.launch { pagerState.animateScrollToPage(1) } },
-                        text = { Text("REQUEST", fontWeight = FontWeight.Bold) }
-                    )
-                    Tab(
-                        selected = pagerState.currentPage == 2,
-                        onClick = { coroutineScope.launch { pagerState.animateScrollToPage(2) } },
-                        text = { Text("RESPONSE", fontWeight = FontWeight.Bold) }
-                    )
+                    val tabs = listOf("OVERVIEW", "REQUEST", "RESPONSE")
+                    tabs.forEachIndexed { index, title ->
+                        val selected = pagerState.currentPage == index
+                        Surface(
+                            onClick = { coroutineScope.launch { pagerState.animateScrollToPage(index) } },
+                            shape = RoundedCornerShape(4.dp),
+                            color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                            border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                            modifier = Modifier.weight(1f).height(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
                 }
+
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
             }
         },
@@ -919,7 +951,6 @@ private fun HeadersAndBodyTabContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Query Parameters Sub-Block (Header outside card, body like normal flow)
         if (queryParams.isNotEmpty()) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -980,7 +1011,6 @@ private fun HeadersAndBodyTabContent(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
         }
 
-        // Headers Sub-Block (Header outside card)
         if (headers.isNotEmpty()) {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Row(
@@ -1041,7 +1071,6 @@ private fun HeadersAndBodyTabContent(
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f))
         }
 
-        // Payload Body Sub-Block
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

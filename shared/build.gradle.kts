@@ -54,6 +54,7 @@ kotlin {
             api(libs.compose.uiToolingPreview)
             api(libs.androidx.activity.compose)
             api(libs.ktor.client.cio)
+            api(libs.okhttp)
         }
         commonMain.dependencies {
             api(project(":inspecto"))
@@ -82,6 +83,7 @@ kotlin {
             api(compose.uiTooling)
             api(libs.compose.uiToolingPreview)
             api(libs.ktor.client.cio)
+            api(libs.okhttp)
         }
         jsMain.dependencies {
             api(libs.wrappers.browser)

@@ -2,6 +2,7 @@ package com.ugurbuga.inspectodemo
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -12,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ugurbuga.inspecto.Inspecto
+import com.ugurbuga.inspecto.InspectoKtorLogging
 import com.ugurbuga.inspecto.launchInspecto
 import io.ktor.client.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -21,7 +23,9 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
-val httpClient = HttpClient {
+// Ktor client with automatic InspectoKtorLogging plugin
+val ktorClient = HttpClient {
+    install(InspectoKtorLogging)
     install(ContentNegotiation) {
         json(Json {
             ignoreUnknownKeys = true
@@ -34,47 +38,49 @@ val httpClient = HttpClient {
 @Composable
 fun App() {
     val coroutineScope = rememberCoroutineScope()
-    var fetchResult by remember { mutableStateOf("Select a request button below to test Inspecto network logging.") }
+    var fetchResult by remember { mutableStateOf("Test automatic Ktor, OkHttp, or Manual logging below.") }
     var isLoading by remember { mutableStateOf(false) }
+    var customTag by remember { mutableStateOf("") }
 
-    fun performRequest(title: String, url: String) {
+    fun performKtorAutoRequest(title: String, url: String) {
         isLoading = true
         coroutineScope.launch {
             try {
-                val startTime = kotlin.time.TimeSource.Monotonic.markNow()
-                val response: HttpResponse = httpClient.get(url)
-                val duration = startTime.elapsedNow().inWholeMilliseconds
-                val statusCode = response.status.value
-                val responseBody = response.bodyAsText()
-
-                fetchResult = "[$title] Success ($statusCode): Received ${responseBody.length} characters."
-
-                Inspecto.addLog(
-                    url = url,
-                    method = "GET",
-                    statusCode = statusCode,
-                    durationMs = duration,
-                    requestHeaders = mapOf(
-                        "User-Agent" to "InspectoDemo-KMP",
-                        "Accept" to "application/json"
-                    ),
-                    responseHeaders = response.headers.entries().associate { it.key to it.value.joinToString(", ") },
-                    responseBody = responseBody
-                )
+                val response: HttpResponse = ktorClient.get(url)
+                val body = response.bodyAsText()
+                fetchResult = "[$title (Ktor Auto)] Success (${response.status.value}): Received ${body.length} chars."
             } catch (e: Exception) {
-                fetchResult = "[$title] Error: ${e.message}"
-                Inspecto.addLog(
-                    url = url,
-                    method = "GET",
-                    statusCode = 0,
-                    durationMs = 0L,
-                    requestHeaders = mapOf("User-Agent" to "InspectoDemo-KMP"),
-                    responseBody = e.message ?: e.toString()
-                )
+                fetchResult = "[$title (Ktor Auto)] Error: ${e.message}"
             } finally {
                 isLoading = false
             }
         }
+    }
+
+    fun performOkHttpAutoRequest(title: String, url: String) {
+        isLoading = true
+        performOkHttpTestRequest(url) { result ->
+            fetchResult = "[$title (OkHttp Auto)] $result"
+            isLoading = false
+        }
+    }
+
+    fun performManualLog() {
+        val tagToUse = customTag.ifBlank { "Manual" }
+        val currentTime = kotlin.time.Clock.System.now().toEpochMilliseconds()
+        Inspecto.addLog(
+            url = "https://api.inspecto.local/v1/manual-action",
+            method = "POST",
+            statusCode = 201,
+            durationMs = 35L,
+            requestHeaders = mapOf("Authorization" to "Bearer custom-secret-token", "Content-Type" to "application/json"),
+            requestQueryParams = mapOf("source" to "button_click"),
+            requestBody = "{\"action\": \"manual_log_test\", \"user\": \"developer\", \"time\": $currentTime}",
+            responseHeaders = mapOf("Content-Type" to "application/json", "X-Inspecto-Mode" to "Manual"),
+            responseBody = "{\"status\": \"success\", \"message\": \"Manually logged entry successfully stored.\"}".trimIndent(),
+            tag = tagToUse
+        )
+        fetchResult = "Manually logged entry with tag '$tagToUse' added to Inspecto!"
     }
 
     MaterialTheme {
@@ -127,69 +133,74 @@ fun App() {
                         Text("Open Inspecto Network Inspector", fontWeight = FontWeight.Bold)
                     }
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                    // Custom Tag Input
+                    OutlinedTextField(
+                        value = customTag,
+                        onValueChange = { customTag = it },
+                        label = { Text("Custom Log Tag (e.g., Ktor, OkHttp, Auth, Manual)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(4.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Test JSON Endpoints",
+                        text = "Automatic & Manual Logging Examples",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
 
-                    // 1. Users API
+                    // 1. Ktor Auto Users
                     Button(
-                        onClick = { performRequest("Users", "https://jsonplaceholder.typicode.com/users") },
+                        onClick = { performKtorAutoRequest("Users", "https://jsonplaceholder.typicode.com/users") },
                         enabled = !isLoading,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Fetch Users JSON (200 OK)")
+                        Text("Fetch Users (Automatic via Ktor Plugin)")
                     }
 
-                    // 2. Posts API
+                    // 2. OkHttp Auto Posts
                     Button(
-                        onClick = { performRequest("Posts", "https://jsonplaceholder.typicode.com/posts") },
+                        onClick = { performOkHttpAutoRequest("Posts", "https://jsonplaceholder.typicode.com/posts") },
+                        enabled = !isLoading,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Fetch Posts (Automatic via OkHttp Interceptor)")
+                    }
+
+                    // 3. Ktor Auto Comments
+                    Button(
+                        onClick = { performKtorAutoRequest("Comments", "https://jsonplaceholder.typicode.com/comments") },
                         enabled = !isLoading,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Fetch Posts JSON (200 OK)")
+                        Text("Fetch Comments (Automatic via Ktor Plugin)")
                     }
 
-                    // 3. Comments API
-                    Button(
-                        onClick = {
-                            performRequest("Comments", "https://jsonplaceholder.typicode.com/comments")
-                        },
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Fetch Comments JSON (200 OK)")
-                    }
-
-                    // 4. Albums API
-                    Button(
-                        onClick = { performRequest("Albums", "https://jsonplaceholder.typicode.com/albums") },
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Fetch Albums JSON (200 OK)")
-                    }
-
-                    // 5. 404 Not Found Test
+                    // 4. Manual Logging Example
                     OutlinedButton(
-                        onClick = { performRequest("404 Error", "https://jsonplaceholder.typicode.com/invalid-endpoint-404") },
+                        onClick = { performManualLog() },
                         enabled = !isLoading,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Test 404 Not Found Request")
+                        Text("Trigger Manual Log Entry Example")
                     }
 
                     if (isLoading) {
                         LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+                    } else {
+                        Spacer(modifier = Modifier.height(4.dp))
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
+                    // Result card with fixed min height to prevent screen jumping
                     Card(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 130.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )

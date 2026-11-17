@@ -1,7 +1,7 @@
 package com.ugurbuga.inspecto
 
 /**
- * Helper class for logging HTTP requests from OkHttp or other Android HTTP clients to Inspecto.
+ * Helper class for logging HTTP requests from OkHttp or other Android/JVM HTTP clients to Inspecto.
  */
 object InspectoOkHttpInterceptor {
 
@@ -14,7 +14,8 @@ object InspectoOkHttpInterceptor {
         queryParams: Map<String, String> = emptyMap(),
         requestBody: String? = null,
         responseHeaders: Map<String, String> = emptyMap(),
-        responseBody: String? = null
+        responseBody: String? = null,
+        tag: String = "OkHttp"
     ) {
         Inspecto.addLog(
             url = url,
@@ -25,7 +26,8 @@ object InspectoOkHttpInterceptor {
             requestQueryParams = queryParams,
             requestBody = requestBody,
             responseHeaders = responseHeaders,
-            responseBody = responseBody
+            responseBody = responseBody,
+            tag = tag
         )
     }
 }

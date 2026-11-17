@@ -42,7 +42,8 @@ object Inspecto {
         requestQueryParams: Map<String, String> = emptyMap(),
         requestBody: String? = null,
         responseHeaders: Map<String, String> = emptyMap(),
-        responseBody: String? = null
+        responseBody: String? = null,
+        tag: String = "HTTP"
     ) {
         val entry = InspectoLogEntry(
             id = generateUniqueId(),
@@ -56,7 +57,8 @@ object Inspecto {
             requestBody = requestBody,
             responseHeaders = responseHeaders,
             responseBody = responseBody,
-            responseSizeByte = responseBody?.length?.toLong() ?: 0L
+            responseSizeByte = responseBody?.length?.toLong() ?: 0L,
+            tag = tag
         )
         addLog(entry)
     }

@@ -15,7 +15,8 @@ data class InspectoLogEntry(
     val requestBody: String? = null,
     val responseHeaders: Map<String, String> = emptyMap(),
     val responseBody: String? = null,
-    val responseSizeByte: Long = 0L
+    val responseSizeByte: Long = 0L,
+    val tag: String = "HTTP"
 ) {
     val isSuccess: Boolean
         get() = statusCode in 200..299

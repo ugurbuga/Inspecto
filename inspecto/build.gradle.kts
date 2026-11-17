@@ -46,6 +46,10 @@ kotlin {
             api(libs.androidx.activity.compose)
             api(compose.uiTooling)
             api(libs.compose.uiToolingPreview)
+            api(libs.okhttp)
+        }
+        jvmMain.dependencies {
+            api(libs.okhttp)
         }
         commonMain.dependencies {
             api(compose.runtime)
