@@ -10,8 +10,8 @@ plugins {
     `maven-publish`
 }
 
-group = "com.github.ugurbuga"
-version = "1.0.0-alpha03"
+group = "com.ugurbuga"
+version = "1.0.0-alpha04"
 
 kotlin {
     listOf(

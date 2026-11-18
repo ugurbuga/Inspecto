@@ -7,10 +7,6 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
-import com.github.ugurbuga.inspecto.generated.resources.Res
-import com.github.ugurbuga.inspecto.generated.resources.outfit
-import org.jetbrains.compose.resources.Font
 
 val DarkBackgroundColor = Color(0xFF0F172A)
 
@@ -54,7 +50,8 @@ internal fun InspectoTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (isDarkTheme) InspectoDarkColorScheme else InspectoLightColorScheme
-    val outfitFontFamily = FontFamily(Font(Res.font.outfit))
+    val outfitFontFamily = getInspectoFontFamily()
+
     val customTypography = Typography(
         displayLarge = TextStyle(fontFamily = outfitFontFamily),
         displayMedium = TextStyle(fontFamily = outfitFontFamily),

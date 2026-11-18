@@ -1,6 +1,7 @@
 package com.ugurbuga.inspecto
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -46,9 +47,6 @@ import com.ugurbuga.inspecto.ui.components.HeaderStatsTable
 import com.ugurbuga.inspecto.ui.components.TransactionCard
 import com.ugurbuga.inspecto.ui.detail.InspectoDetailScreen
 import com.ugurbuga.inspecto.ui.theme.InspectoTheme
-
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.lazy.items
 
 internal enum class InspectoSortOption(val label: String) {
     DATE_DESC("Date (Newest first)"),
@@ -166,6 +164,7 @@ private fun InspectoScreenContent(
         FilterBottomSheet(
             selectedFilters = selectedFilters,
             filterMode = filterMode,
+            isDarkTheme = isDarkTheme,
             onApply = { filters, mode ->
                 selectedFilters = filters
                 filterMode = mode
@@ -177,6 +176,7 @@ private fun InspectoScreenContent(
     if (isSortBottomSheetOpen) {
         SortBottomSheet(
             sortOption = sortOption,
+            isDarkTheme = isDarkTheme,
             onApply = { option -> sortOption = option },
             onDismiss = { isSortBottomSheetOpen = false }
         )

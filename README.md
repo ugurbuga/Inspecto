@@ -87,7 +87,7 @@ dependencyResolutionManagement {
 Add dependency to `build.gradle.kts`:
 ```kotlin
 dependencies {
-    implementation("com.github.ugurbuga:inspecto:1.0.0")
+    implementation("com.ugurbuga:inspecto:1.0.0")
 }
 ```
 

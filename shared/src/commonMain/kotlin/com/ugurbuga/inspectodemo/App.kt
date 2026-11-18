@@ -32,7 +32,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -44,12 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.github.ugurbuga.shared.generated.resources.Res
-import com.github.ugurbuga.shared.generated.resources.outfit
 import com.ugurbuga.inspecto.Inspecto
 import com.ugurbuga.inspecto.InspectoApp
 import com.ugurbuga.inspecto.InspectoKtorLogging
@@ -62,7 +57,6 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import org.jetbrains.compose.resources.Font
 
 val ktorClient = HttpClient {
     install(InspectoKtorLogging)
@@ -77,25 +71,6 @@ val ktorClient = HttpClient {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
-    val outfitFontFamily = FontFamily(Font(Res.font.outfit))
-    val customTypography = Typography(
-        displayLarge = TextStyle(fontFamily = outfitFontFamily),
-        displayMedium = TextStyle(fontFamily = outfitFontFamily),
-        displaySmall = TextStyle(fontFamily = outfitFontFamily),
-        headlineLarge = TextStyle(fontFamily = outfitFontFamily),
-        headlineMedium = TextStyle(fontFamily = outfitFontFamily),
-        headlineSmall = TextStyle(fontFamily = outfitFontFamily),
-        titleLarge = TextStyle(fontFamily = outfitFontFamily),
-        titleMedium = TextStyle(fontFamily = outfitFontFamily),
-        titleSmall = TextStyle(fontFamily = outfitFontFamily),
-        bodyLarge = TextStyle(fontFamily = outfitFontFamily),
-        bodyMedium = TextStyle(fontFamily = outfitFontFamily),
-        bodySmall = TextStyle(fontFamily = outfitFontFamily),
-        labelLarge = TextStyle(fontFamily = outfitFontFamily),
-        labelMedium = TextStyle(fontFamily = outfitFontFamily),
-        labelSmall = TextStyle(fontFamily = outfitFontFamily)
-    )
-
     InspectoApp {
         val coroutineScope = rememberCoroutineScope()
         var fetchResult by remember { mutableStateOf("Test automatic Ktor, OkHttp, or Manual logging below.") }
@@ -156,7 +131,7 @@ fun App() {
             fetchResult = "Manual log entry added successfully!"
         }
 
-        MaterialTheme(typography = customTypography) {
+        MaterialTheme {
             Scaffold(
                 topBar = {
                     CenterAlignedTopAppBar(
