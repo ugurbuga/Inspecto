@@ -40,10 +40,18 @@ data class InspectoLogEntry(
         get() {
             val bytes = if (responseSizeByte > 0) responseSizeByte else (responseBody?.length?.toLong() ?: 0L)
             return when {
-                bytes <= 0 -> "0 B"
-                bytes < 1024 -> "$bytes B"
-                bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-                else -> "${(bytes / (1024 * 1024.0)).toString().take(4)} MB"
+                bytes <= 0L -> "0 B"
+                bytes < 1024L -> "$bytes B"
+                bytes < 1024L * 1024L -> {
+                    val kb = bytes / 1024.0
+                    val formatted = (kb * 10).toLong() / 10.0
+                    if (formatted % 1.0 == 0.0) "${formatted.toLong()} KB" else "$formatted KB"
+                }
+                else -> {
+                    val mb = bytes / (1024.0 * 1024.0)
+                    val formatted = (mb * 10).toLong() / 10.0
+                    if (formatted % 1.0 == 0.0) "${formatted.toLong()} MB" else "$formatted MB"
+                }
             }
         }
 

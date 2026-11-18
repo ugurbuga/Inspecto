@@ -52,6 +52,9 @@ internal fun InspectoTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (isDarkTheme) InspectoDarkColorScheme else InspectoLightColorScheme
+    val statusBarColor = if (isDarkTheme) DarkBackgroundColor else Color(0xFFF1F5F9)
+
+    SetStatusBarColor(color = statusBarColor, darkIcons = !isDarkTheme)
 
     val customTypography = Typography(
         displayLarge = TextStyle(fontFamily = fontFamily),

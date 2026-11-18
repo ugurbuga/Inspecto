@@ -92,7 +92,7 @@ internal fun TransactionCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
-                        text = "${entry.responseSizeByte} B",
+                        text = entry.formattedSize,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
