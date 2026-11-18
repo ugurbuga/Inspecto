@@ -52,6 +52,7 @@ kotlin {
             api(libs.okhttp)
         }
         commonMain.dependencies {
+            api(compose.components.resources)
             api(compose.runtime)
             api(compose.foundation)
             api(compose.material3)

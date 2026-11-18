@@ -9,6 +9,9 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
+group = "com.github.ugurbuga"
+version = "1.0.0-alpha03"
+
 kotlin {
     listOf(
         iosArm64(),
