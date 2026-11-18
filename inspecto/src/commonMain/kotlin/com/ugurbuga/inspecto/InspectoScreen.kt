@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -28,12 +27,47 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+private val InspectoLightColorScheme = lightColorScheme(
+    primary = Color(0xFF2563EB),
+    onPrimary = Color.White,
+    primaryContainer = Color(0xFFEFF6FF),
+    onPrimaryContainer = Color(0xFF1E40AF),
+    secondary = Color(0xFF0284C7),
+    surface = Color(0xFFF8FAFC),
+    onSurface = Color(0xFF0F172A),
+    onSurfaceVariant = Color(0xFF64748B),
+    surfaceContainer = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFF1F5F9),
+    surfaceContainerHigh = Color(0xFFE2E8F0),
+    outline = Color(0xFF94A3B8),
+    outlineVariant = Color(0xFFCBD5E1),
+    error = Color(0xFFE11D48)
+)
+
+private val InspectoDarkColorScheme = darkColorScheme(
+    primary = Color(0xFF60A5FA),
+    onPrimary = Color(0xFF1E3A8A),
+    primaryContainer = Color(0xFF1E3A8A),
+    onPrimaryContainer = Color(0xFFDBEAFE),
+    secondary = Color(0xFF38BDF8),
+    surface = Color(0xFF0F172A),
+    onSurface = Color(0xFFF8FAFC),
+    onSurfaceVariant = Color(0xFF94A3B8),
+    surfaceContainer = Color(0xFF1E293B),
+    surfaceContainerLow = Color(0xFF020617),
+    surfaceContainerHigh = Color(0xFF334155),
+    outline = Color(0xFF64748B),
+    outlineVariant = Color(0xFF475569),
+    error = Color(0xFFF87171)
+)
 
 internal enum class InspectoSortOption(val label: String) {
     DATE_DESC("Date (Newest first)"),
@@ -53,7 +87,7 @@ internal fun InspectoScreen(
     var isDarkThemeOverride by remember { mutableStateOf<Boolean?>(null) }
     val isDark = isDarkThemeOverride ?: systemDark
 
-    val colorScheme = if (isDark) darkColorScheme() else lightColorScheme()
+    val colorScheme = if (isDark) InspectoDarkColorScheme else InspectoLightColorScheme
 
     MaterialTheme(colorScheme = colorScheme) {
         InspectoScreenContent(
@@ -78,35 +112,50 @@ private fun InspectoScreenContent(
 
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilter by remember { mutableStateOf("ALL") }
+    var filterMode by remember { mutableStateOf("AND") }
     var sortOption by remember { mutableStateOf(InspectoSortOption.DATE_DESC) }
-    var isSortMenuExpanded by remember { mutableStateOf(false) }
+
+    var isFilterBottomSheetOpen by remember { mutableStateOf(false) }
+    var isSortBottomSheetOpen by remember { mutableStateOf(false) }
 
     BackHandler(enabled = selectedEntry != null) {
         selectedEntry = null
     }
 
-    val filteredLogs = remember(logs, searchQuery, selectedFilter) {
+    val filteredLogs = remember(logs, searchQuery, selectedFilter, filterMode) {
         logs.filter { entry ->
             val matchesFilter = when (selectedFilter) {
-                "GET" -> entry.method.equals("GET", ignoreCase = true)
-                "POST" -> entry.method.equals("POST", ignoreCase = true)
+                "ALL" -> true
                 "2XX" -> entry.statusCode in 200..299
                 "ERR" -> entry.isError
-                else -> true
+                "SUCCESS" -> entry.isSuccess
+                else -> entry.method.equals(selectedFilter, ignoreCase = true)
             }
 
-            val matchesSearch = if (searchQuery.isBlank()) {
+            val query = searchQuery.trim().lowercase()
+            val matchesSearch = if (query.isBlank()) {
                 true
             } else {
-                entry.url.contains(searchQuery, ignoreCase = true) ||
-                        entry.method.contains(searchQuery, ignoreCase = true) ||
-                        entry.statusCode.toString().contains(searchQuery) ||
-                        entry.tag.contains(searchQuery, ignoreCase = true) ||
-                        (entry.requestBody?.contains(searchQuery, ignoreCase = true) == true) ||
-                        (entry.responseBody?.contains(searchQuery, ignoreCase = true) == true)
+                when (query) {
+                    "success" -> entry.isSuccess
+                    "error", "err" -> entry.isError
+                    "2xx" -> entry.statusCode in 200..299
+                    else -> {
+                        entry.url.contains(query, ignoreCase = true) ||
+                                entry.method.contains(query, ignoreCase = true) ||
+                                entry.statusCode.toString().contains(query) ||
+                                entry.tag.contains(query, ignoreCase = true) ||
+                                (entry.requestBody?.contains(query, ignoreCase = true) == true) ||
+                                (entry.responseBody?.contains(query, ignoreCase = true) == true)
+                    }
+                }
             }
 
-            matchesFilter && matchesSearch
+            if (filterMode == "AND") {
+                matchesFilter && matchesSearch
+            } else {
+                matchesFilter || matchesSearch
+            }
         }
     }
 
@@ -125,6 +174,140 @@ private fun InspectoScreenContent(
     val successCount = logs.count { it.isSuccess }
     val errorCount = logs.count { it.isError }
     val avgLatency = if (logs.isNotEmpty()) logs.map { it.durationMs }.average().toLong() else 0L
+
+    if (isFilterBottomSheetOpen) {
+        ModalBottomSheet(
+            onDismissRequest = { isFilterBottomSheetOpen = false },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 12.dp)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    "Filter Requests",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                val filters = listOf(
+                    "ALL",
+                    "GET",
+                    "POST",
+                    "PUT",
+                    "DELETE",
+                    "PATCH",
+                    "OPTIONS",
+                    "HEAD",
+                    "2XX",
+                    "ERR",
+                    "SUCCESS"
+                )
+                filters.forEach { filter ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                selectedFilter = filter
+                                isFilterBottomSheetOpen = false
+                            }
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = selectedFilter == filter,
+                            onClick = {
+                                selectedFilter = filter
+                                isFilterBottomSheetOpen = false
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            filter,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (selectedFilter == filter) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                Text(
+                    "Filter Combination Mode",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(
+                        selected = filterMode == "AND",
+                        onClick = { filterMode = "AND" },
+                        label = { Text("AND") },
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                    FilterChip(
+                        selected = filterMode == "OR",
+                        onClick = { filterMode = "OR" },
+                        label = { Text("OR") },
+                        shape = RoundedCornerShape(4.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+
+    if (isSortBottomSheetOpen) {
+        ModalBottomSheet(
+            onDismissRequest = { isSortBottomSheetOpen = false },
+            containerColor = MaterialTheme.colorScheme.surfaceContainer
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    "Sort Requests",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+
+                InspectoSortOption.entries.forEach { option ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                sortOption = option
+                                isSortBottomSheetOpen = false
+                            }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = sortOption == option,
+                            onClick = {
+                                sortOption = option
+                                isSortBottomSheetOpen = false
+                            }
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            option.label,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (sortOption == option) FontWeight.Bold else FontWeight.Normal
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -151,33 +334,11 @@ private fun InspectoScreenContent(
                             }
                         },
                         title = {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = "Inspecto Network Inspector",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        },
-                        actions = {
-                            IconButton(onClick = onToggleTheme) {
-                                Icon(
-                                    imageVector = if (isDarkTheme) Icons.Filled.LightMode else Icons.Filled.DarkMode,
-                                    contentDescription = "Toggle Theme",
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                            }
-
-                            IconButton(onClick = { Inspecto.clear() }) {
-                                Icon(
-                                    imageVector = Icons.Filled.Delete,
-                                    contentDescription = "Clear Logs",
-                                    tint = MaterialTheme.colorScheme.error
-                                )
-                            }
+                            Text(
+                                text = "Inspecto",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
@@ -191,132 +352,239 @@ private fun InspectoScreenContent(
                         .fillMaxSize()
                         .padding(innerPadding)
                 ) {
-                    // Summary Stats Cards Row
+                    // Header Section: Left = 4 Table Stat Rows; Right = 2x2 Grid Action Icons (Filter, Sort, Theme, Clear)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        StatCard(
-                            label = "TOTAL",
-                            value = "$totalCount",
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            valueColor = MaterialTheme.colorScheme.onSurface,
+                        // Left: Table layout with 4 stat rows (both left and right texts use onSurface color)
+                        Surface(
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            shape = RoundedCornerShape(6.dp),
+                            border = BorderStroke(
+                                1.dp,
+                                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                            ),
                             modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            label = "2XX SUCCESS",
-                            value = "$successCount",
-                            containerColor = Color(0xFF10B981).copy(alpha = 0.15f),
-                            valueColor = Color(0xFF10B981),
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            label = "ERRORS",
-                            value = "$errorCount",
-                            containerColor = Color(0xFFEF4444).copy(alpha = 0.15f),
-                            valueColor = Color(0xFFEF4444),
-                            modifier = Modifier.weight(1f)
-                        )
-                        StatCard(
-                            label = "AVG DURATION",
-                            value = "${avgLatency}ms",
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            valueColor = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.weight(1f)
-                        )
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(
+                                    horizontal = 10.dp,
+                                    vertical = 6.dp
+                                ),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        "Total Requests",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        "$totalCount",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                        alpha = 0.2f
+                                    )
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        "Success (2XX)",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        "$successCount",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                        alpha = 0.2f
+                                    )
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        "Errors",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        "$errorCount",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                        alpha = 0.2f
+                                    )
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(
+                                        "Avg Duration",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Medium,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        "${avgLatency}ms",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                        }
+
+                        // Right: 2x2 Grid Action Icons with High-Contrast Colors (especially in Dark Mode)
+                        val iconButtonBg = if (isDarkTheme) Color(0xFF1E293B) else MaterialTheme.colorScheme.primaryContainer
+                        val filterTint = if (isDarkTheme) Color(0xFF60A5FA) else MaterialTheme.colorScheme.primary
+                        val sortTint = if (isDarkTheme) Color(0xFF60A5FA) else MaterialTheme.colorScheme.primary
+                        val themeTint = if (isDarkTheme) Color(0xFFFBBF24) else MaterialTheme.colorScheme.primary
+                        val clearTint = if (isDarkTheme) Color(0xFFF87171) else Color(0xFFE11D48)
+
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalAlignment = Alignment.End
+                        ) {
+                            // Row 1: Filter & Sort
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Surface(
+                                    onClick = { isFilterBottomSheetOpen = true },
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = iconButtonBg,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Filled.FilterList,
+                                            contentDescription = "Filter",
+                                            tint = filterTint,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                                Surface(
+                                    onClick = { isSortBottomSheetOpen = true },
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = iconButtonBg,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Filled.SwapVert,
+                                            contentDescription = "Sort",
+                                            tint = sortTint,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            // Row 2: Theme & Clear
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Surface(
+                                    onClick = onToggleTheme,
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = iconButtonBg,
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = if (isDarkTheme) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                                            contentDescription = "Toggle Theme",
+                                            tint = themeTint,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                                Surface(
+                                    onClick = { Inspecto.clear() },
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = if (isDarkTheme) Color(0xFF451A03) else Color(0xFFFEF2F2),
+                                    border = BorderStroke(1.dp, clearTint.copy(alpha = 0.4f)),
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Filled.Delete,
+                                            contentDescription = "Clear Logs",
+                                            tint = clearTint,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
                     }
 
-                    // Search Input
+                    // Search Input (Compact, unclipped spacing)
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
-                        placeholder = { Text("Filter by URL, Status, Tag, Payload...", style = MaterialTheme.typography.bodySmall) },
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search", modifier = Modifier.size(18.dp)) },
+                            .padding(horizontal = 12.dp, vertical = 2.dp),
+                        textStyle = MaterialTheme.typography.bodySmall,
+                        placeholder = {
+                            Text(
+                                "Search URL, method, status, tag...",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Filled.Search,
+                                contentDescription = "Search",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
                         trailingIcon = {
                             if (searchQuery.isNotEmpty()) {
-                                IconButton(onClick = { searchQuery = "" }) {
-                                    Icon(Icons.Filled.Clear, contentDescription = "Clear", modifier = Modifier.size(16.dp))
+                                IconButton(
+                                    onClick = { searchQuery = "" },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Clear,
+                                        contentDescription = "Clear",
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
                             }
                         },
                         singleLine = true,
                         shape = RoundedCornerShape(4.dp)
                     )
-
-                    // Filter Chips & Sort Button Row
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            val filters = listOf("ALL", "GET", "POST", "2XX", "ERR")
-                            items(filters) { filter ->
-                                FilterChip(
-                                    selected = selectedFilter == filter,
-                                    onClick = { selectedFilter = filter },
-                                    label = {
-                                        Text(
-                                            text = filter,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = if (selectedFilter == filter) FontWeight.Bold else FontWeight.Medium
-                                        )
-                                    },
-                                    shape = RoundedCornerShape(4.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Box {
-                            IconButton(
-                                onClick = { isSortMenuExpanded = true },
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.SwapVert,
-                                    contentDescription = "Sort",
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-
-                            DropdownMenu(
-                                expanded = isSortMenuExpanded,
-                                onDismissRequest = { isSortMenuExpanded = false }
-                            ) {
-                                InspectoSortOption.entries.forEach { option ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                text = option.label,
-                                                fontWeight = if (sortOption == option) FontWeight.Bold else FontWeight.Normal,
-                                                color = if (sortOption == option) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                                            )
-                                        },
-                                        onClick = {
-                                            sortOption = option
-                                            isSortMenuExpanded = false
-                                        },
-                                        leadingIcon = if (sortOption == option) {
-                                            { Icon(Icons.Filled.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary) }
-                                        } else null
-                                    )
-                                }
-                            }
-                        }
-                    }
 
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f))
 
@@ -374,41 +642,6 @@ private fun InspectoScreenContent(
 }
 
 @Composable
-private fun StatCard(
-    label: String,
-    value: String,
-    containerColor: Color,
-    valueColor: Color,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        color = containerColor,
-        shape = RoundedCornerShape(4.dp),
-        modifier = modifier
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier.padding(horizontal = 6.dp, vertical = 8.dp)
-        ) {
-            Text(
-                text = value,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = valueColor
-            )
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                fontSize = 9.sp,
-                color = valueColor.copy(alpha = 0.8f)
-            )
-        }
-    }
-}
-
-@Composable
 private fun TransactionCard(
     entry: InspectoLogEntry,
     onClick: () -> Unit,
@@ -419,6 +652,9 @@ private fun TransactionCard(
         "POST" -> Color(0xFF10B981)
         "PUT" -> Color(0xFFF59E0B)
         "DELETE" -> Color(0xFFEF4444)
+        "PATCH" -> Color(0xFF8B5CF6)
+        "OPTIONS" -> Color(0xFF6B7280)
+        "HEAD" -> Color(0xFF374151)
         else -> MaterialTheme.colorScheme.secondary
     }
 
@@ -435,107 +671,98 @@ private fun TransactionCard(
         shape = RoundedCornerShape(4.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
-        shadowElevation = 1.dp
     ) {
-        Column(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            Surface(
+                color = methodBg,
+                shape = RoundedCornerShape(4.dp)
             ) {
+                Text(
+                    text = entry.method,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                )
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = entry.url,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Surface(
-                        color = methodBg,
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Text(
-                            text = entry.method.uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-
-                    val tagBg = when {
-                        entry.tag.contains("Ktor", ignoreCase = true) -> Color(0xFF8B5CF6) // Purple
-                        entry.tag.contains("OkHttp", ignoreCase = true) -> Color(0xFFF59E0B) // Amber
-                        entry.tag.equals("Manual", ignoreCase = true) -> Color(0xFF0284C7) // Blue
-                        else -> Color(0xFF10B981) // Emerald Green for custom tags
-                    }
-
-                    // Tag Badge
-                    Surface(
-                        color = tagBg,
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Text(
-                            text = entry.tag,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-
-                    Surface(
-                        color = statusBg.copy(alpha = 0.15f),
-                        shape = RoundedCornerShape(4.dp),
-                        border = BorderStroke(1.dp, statusBg.copy(alpha = 0.5f))
-                    ) {
-                        Text(
-                            text = "${entry.statusCode}",
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = statusBg,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
-                    }
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "⚡ ${entry.durationMs}ms",
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = entry.formattedSize,
+                        text = "${entry.durationMs}ms",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                    Text(
+                        text = "•",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = "${entry.responseSizeByte} B",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (entry.tag.isNotBlank() && entry.tag != "HTTP") {
+                        Text(
+                            text = "•",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        val tagColor = when {
+                            entry.tag.contains("Ktor", ignoreCase = true) -> Color(0xFF8B5CF6)
+                            entry.tag.contains("OkHttp", ignoreCase = true) -> Color(0xFFF59E0B)
+                            entry.tag.equals("Manual", ignoreCase = true) -> Color(0xFF0EA5E9)
+                            else -> Color(0xFF10B981)
+                        }
+                        Surface(
+                            color = tagColor.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(4.dp),
+                            border = BorderStroke(1.dp, tagColor.copy(alpha = 0.4f))
+                        ) {
+                            Text(
+                                text = entry.tag,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = tagColor,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
                 }
             }
 
-            Text(
-                text = entry.path,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                fontFamily = FontFamily.Monospace
-            )
-
-            Text(
-                text = entry.host,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            Surface(
+                color = statusBg.copy(alpha = 0.15f),
+                shape = RoundedCornerShape(4.dp)
+            ) {
+                Text(
+                    text = "${entry.statusCode}",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = statusBg,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                )
+            }
         }
     }
 }
@@ -581,7 +808,6 @@ internal fun InspectoDetailScreen(
                         )
                     },
                     actions = {
-                        // 1. Copy active tab contents button
                         IconButton(onClick = {
                             val (text, label) = when (pagerState.currentPage) {
                                 0 -> entry.formattedOverview() to "Overview"
@@ -601,7 +827,6 @@ internal fun InspectoDetailScreen(
                             )
                         }
 
-                        // 2. Native System Share
                         IconButton(onClick = {
                             val fullText = entry.toFormattedLogText()
                             shareText(fullText, "Inspecto Log - ${entry.method} ${entry.path}")
@@ -619,7 +844,6 @@ internal fun InspectoDetailScreen(
                     )
                 )
 
-                // Separated Pill Tabs ("ayrık olsunlar")
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -634,7 +858,12 @@ internal fun InspectoDetailScreen(
                             onClick = { coroutineScope.launch { pagerState.animateScrollToPage(index) } },
                             shape = RoundedCornerShape(4.dp),
                             color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
-                            border = BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                            border = BorderStroke(
+                                1.dp,
+                                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(
+                                    alpha = 0.4f
+                                )
+                            ),
                             modifier = Modifier.weight(1f).height(38.dp)
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -680,6 +909,7 @@ internal fun InspectoDetailScreen(
                         },
                         onToast = { msg -> copiedMessage = msg }
                     )
+
                     1 -> HeadersAndBodyTabContent(
                         sectionTitle = "Request",
                         queryParams = entry.requestQueryParams,
@@ -708,6 +938,7 @@ internal fun InspectoDetailScreen(
                         },
                         onToast = { msg -> copiedMessage = msg }
                     )
+
                     2 -> HeadersAndBodyTabContent(
                         sectionTitle = "Response",
                         queryParams = emptyMap(),
@@ -775,13 +1006,15 @@ private fun OverviewTabContent(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Top Request URL Card with Copy Button aligned on Far Right
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 shape = RoundedCornerShape(4.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onCopyUrl() }
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier
@@ -841,34 +1074,15 @@ private fun OverviewTabContent(
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Button(
-                    onClick = onCopyCurl,
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Copy cURL", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
-                }
-                OutlinedButton(
-                    onClick = onCopyUrl,
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("Copy URL", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
-                }
-            }
-
+            // Overview Details Card
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 shape = RoundedCornerShape(4.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                ),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier
@@ -889,7 +1103,7 @@ private fun OverviewTabContent(
                         )
                         IconButton(
                             onClick = onCopyOverviewDetails,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.ContentCopy,
@@ -905,7 +1119,30 @@ private fun OverviewTabContent(
                     DetailRow("Status Code", "${entry.statusCode}", onToast)
                     DetailRow("Duration (Latency)", "${entry.durationMs} ms", onToast)
                     DetailRow("Response Size", entry.formattedSize, onToast)
+                    if (entry.tag.isNotBlank()) {
+                        DetailRow("Tag", entry.tag, onToast)
+                    }
+                    DetailRow("Timestamp", "${entry.timestampMs}", onToast)
                 }
+            }
+
+            // cURL Button placed below Overview Details section as a Half-Width button
+            Button(
+                onClick = onCopyCurl,
+                shape = RoundedCornerShape(4.dp),
+                modifier = Modifier.fillMaxWidth(0.5f)
+            ) {
+                Icon(
+                    Icons.Filled.ContentCopy,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    "Copy cURL",
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.labelMedium
+                )
             }
         }
     }
@@ -921,25 +1158,17 @@ private fun HeadersAndBodyTabContent(
     onCopyHeaders: () -> Unit,
     onCopyQueryParams: () -> Unit,
     onCopyBody: () -> Unit,
-    onToast: (String) -> Unit = {}
+    onToast: (String) -> Unit
 ) {
-    var isQueryParamsExpanded by remember { mutableStateOf(false) }
-    var isHeadersExpanded by remember { mutableStateOf(false) }
-
-    var isProcessing by remember { mutableStateOf(false) }
+    var isHeadersExpanded by remember { mutableStateOf(true) }
+    var isQueryParamsExpanded by remember { mutableStateOf(true) }
     var formattedLines by remember { mutableStateOf<List<String>>(emptyList()) }
+    var isProcessing by remember { mutableStateOf(true) }
 
     LaunchedEffect(rawBody) {
-        if (rawBody.isBlank()) {
-            formattedLines = emptyList()
-            isProcessing = false
-        } else {
-            isProcessing = true
-            val linesResult = withContext(Dispatchers.Default) {
-                val formatted = Inspecto.formatJson(rawBody)
-                formatted.lines()
-            }
-            formattedLines = linesResult
+        isProcessing = true
+        withContext(Dispatchers.Default) {
+            formattedLines = Inspecto.formatJson(rawBody).lines()
             isProcessing = false
         }
     }
@@ -992,7 +1221,10 @@ private fun HeadersAndBodyTabContent(
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceContainer,
                         shape = RoundedCornerShape(4.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                        ),
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                     ) {
                         Column(
@@ -1052,7 +1284,10 @@ private fun HeadersAndBodyTabContent(
                     Surface(
                         color = MaterialTheme.colorScheme.surfaceContainer,
                         shape = RoundedCornerShape(4.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                        border = BorderStroke(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                        ),
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                     ) {
                         Column(
@@ -1098,7 +1333,10 @@ private fun HeadersAndBodyTabContent(
             Surface(
                 color = MaterialTheme.colorScheme.surfaceContainer,
                 shape = RoundedCornerShape(4.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                ),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Box(modifier = Modifier.padding(12.dp)) {
@@ -1110,6 +1348,7 @@ private fun HeadersAndBodyTabContent(
                                 color = MaterialTheme.colorScheme.outline
                             )
                         }
+
                         isProcessing -> {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1130,6 +1369,7 @@ private fun HeadersAndBodyTabContent(
                                 )
                             }
                         }
+
                         else -> {
                             SelectionContainer {
                                 LazyColumn(
@@ -1143,7 +1383,10 @@ private fun HeadersAndBodyTabContent(
                                     ) { index ->
                                         val line = formattedLines[index]
                                         val highlightedLine = remember(line, isDarkTheme) {
-                                            InspectoJsonSyntaxHighlighter.highlightJsonLine(line, isDarkTheme)
+                                            InspectoJsonSyntaxHighlighter.highlightJsonLine(
+                                                line,
+                                                isDarkTheme
+                                            )
                                         }
                                         Text(
                                             text = highlightedLine,
@@ -1202,5 +1445,123 @@ private fun DetailRow(
                 textAlign = TextAlign.End
             )
         }
+    }
+}
+
+@Preview(name = "Inspecto List - Light")
+@Composable
+internal fun InspectoListLightPreview() {
+    LaunchedEffect(Unit) {
+        Inspecto.clear()
+        Inspecto.addLog(
+            url = "https://api.example.com/v1/users",
+            method = "GET",
+            statusCode = 200,
+            durationMs = 120L,
+            requestHeaders = mapOf("Authorization" to "Bearer token123"),
+            responseHeaders = mapOf("Content-Type" to "application/json"),
+            responseBody = "[{\"id\": 1, \"name\": \"John Doe\"}]",
+            tag = "Ktor"
+        )
+        Inspecto.addLog(
+            url = "https://api.example.com/v1/posts",
+            method = "POST",
+            statusCode = 500,
+            durationMs = 450L,
+            requestHeaders = mapOf("Content-Type" to "application/json"),
+            requestBody = "{\"title\": \"New Post\"}",
+            responseHeaders = mapOf("Content-Type" to "application/json"),
+            responseBody = "{\"error\": \"Internal Server Error\"}",
+            tag = "OkHttp"
+        )
+    }
+    InspectoScreen(onDismiss = {})
+}
+
+@Preview(name = "Inspecto List - Dark")
+@Composable
+internal fun InspectoListDarkPreview() {
+    LaunchedEffect(Unit) {
+        Inspecto.clear()
+        Inspecto.addLog(
+            url = "https://api.example.com/v1/users",
+            method = "GET",
+            statusCode = 200,
+            durationMs = 120L,
+            requestHeaders = mapOf("Authorization" to "Bearer token123"),
+            responseHeaders = mapOf("Content-Type" to "application/json"),
+            responseBody = "[{\"id\": 1, \"name\": \"John Doe\"}]",
+            tag = "Ktor"
+        )
+        Inspecto.addLog(
+            url = "https://api.example.com/v1/posts",
+            method = "POST",
+            statusCode = 500,
+            durationMs = 450L,
+            requestHeaders = mapOf("Content-Type" to "application/json"),
+            requestBody = "{\"title\": \"New Post\"}",
+            responseHeaders = mapOf("Content-Type" to "application/json"),
+            responseBody = "{\"error\": \"Internal Server Error\"}",
+            tag = "OkHttp"
+        )
+    }
+    MaterialTheme(colorScheme = InspectoDarkColorScheme) {
+        Surface {
+            InspectoScreen(onDismiss = {})
+        }
+    }
+}
+
+@Preview(name = "Inspecto Detail - Light")
+@Composable
+internal fun InspectoDetailLightPreview() {
+    val sampleEntry = InspectoLogEntry(
+        id = "1",
+        url = "https://api.example.com/v1/users",
+        method = "GET",
+        statusCode = 200,
+        durationMs = 120L,
+        requestHeaders = mapOf("Authorization" to "Bearer token123", "Accept" to "application/json"),
+        requestQueryParams = mapOf("page" to "1", "limit" to "10"),
+        requestBody = null,
+        responseHeaders = mapOf("Content-Type" to "application/json", "Cache-Control" to "no-cache"),
+        responseBody = "[\n  {\n    \"id\": 1,\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\"\n  }\n]",
+        responseSizeByte = 1042L,
+        tag = "Ktor"
+    )
+    MaterialTheme(colorScheme = InspectoLightColorScheme) {
+        InspectoDetailScreen(
+            entry = sampleEntry,
+            onBackClick = {},
+            isDarkTheme = false,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+@Preview(name = "Inspecto Detail - Dark")
+@Composable
+internal fun InspectoDetailDarkPreview() {
+    val sampleEntry = InspectoLogEntry(
+        id = "1",
+        url = "https://api.example.com/v1/users",
+        method = "GET",
+        statusCode = 200,
+        durationMs = 120L,
+        requestHeaders = mapOf("Authorization" to "Bearer token123", "Accept" to "application/json"),
+        requestQueryParams = mapOf("page" to "1", "limit" to "10"),
+        requestBody = null,
+        responseHeaders = mapOf("Content-Type" to "application/json", "Cache-Control" to "no-cache"),
+        responseBody = "[\n  {\n    \"id\": 1,\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\"\n  }\n]",
+        responseSizeByte = 1042L,
+        tag = "Ktor"
+    )
+    MaterialTheme(colorScheme = InspectoDarkColorScheme) {
+        InspectoDetailScreen(
+            entry = sampleEntry,
+            onBackClick = {},
+            isDarkTheme = true,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }

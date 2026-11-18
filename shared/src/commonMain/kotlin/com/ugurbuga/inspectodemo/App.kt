@@ -1,29 +1,64 @@
 package com.ugurbuga.inspectodemo
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ugurbuga.inspecto.Inspecto
+import com.ugurbuga.inspecto.InspectoApp
 import com.ugurbuga.inspecto.InspectoKtorLogging
 import com.ugurbuga.inspecto.launchInspecto
-import io.ktor.client.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.serialization.kotlinx.json.*
+import inspectodemo.shared.generated.resources.Res
+import inspectodemo.shared.generated.resources.outfit
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import org.jetbrains.compose.resources.Font
 
-// Ktor client with automatic InspectoKtorLogging plugin
 val ktorClient = HttpClient {
     install(InspectoKtorLogging)
     install(ContentNegotiation) {
@@ -37,185 +72,204 @@ val ktorClient = HttpClient {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
-    val coroutineScope = rememberCoroutineScope()
-    var fetchResult by remember { mutableStateOf("Test automatic Ktor, OkHttp, or Manual logging below.") }
-    var isLoading by remember { mutableStateOf(false) }
-    var customTag by remember { mutableStateOf("") }
+    val outfitFontFamily = FontFamily(Font(Res.font.outfit))
+    val customTypography = Typography(
+        displayLarge = TextStyle(fontFamily = outfitFontFamily),
+        displayMedium = TextStyle(fontFamily = outfitFontFamily),
+        displaySmall = TextStyle(fontFamily = outfitFontFamily),
+        headlineLarge = TextStyle(fontFamily = outfitFontFamily),
+        headlineMedium = TextStyle(fontFamily = outfitFontFamily),
+        headlineSmall = TextStyle(fontFamily = outfitFontFamily),
+        titleLarge = TextStyle(fontFamily = outfitFontFamily),
+        titleMedium = TextStyle(fontFamily = outfitFontFamily),
+        titleSmall = TextStyle(fontFamily = outfitFontFamily),
+        bodyLarge = TextStyle(fontFamily = outfitFontFamily),
+        bodyMedium = TextStyle(fontFamily = outfitFontFamily),
+        bodySmall = TextStyle(fontFamily = outfitFontFamily),
+        labelLarge = TextStyle(fontFamily = outfitFontFamily),
+        labelMedium = TextStyle(fontFamily = outfitFontFamily),
+        labelSmall = TextStyle(fontFamily = outfitFontFamily)
+    )
 
-    fun performKtorAutoRequest(title: String, url: String) {
-        isLoading = true
-        coroutineScope.launch {
-            try {
-                val response: HttpResponse = ktorClient.get(url)
-                val body = response.bodyAsText()
-                fetchResult = "[$title (Ktor Auto)] Success (${response.status.value}): Received ${body.length} chars."
-            } catch (e: Exception) {
-                fetchResult = "[$title (Ktor Auto)] Error: ${e.message}"
-            } finally {
+    InspectoApp {
+        val coroutineScope = rememberCoroutineScope()
+        var fetchResult by remember { mutableStateOf("Test automatic Ktor, OkHttp, or Manual logging below.") }
+        var isLoading by remember { mutableStateOf(false) }
+
+        fun performKtorAutoRequest(title: String, url: String) {
+            isLoading = true
+            coroutineScope.launch {
+                try {
+                    val response: HttpResponse = ktorClient.get(url)
+                    val body = response.bodyAsText()
+                    fetchResult =
+                        "[$title (KTOR)] Success (${response.status.value}): Received ${body.length} chars."
+                } catch (e: Exception) {
+                    fetchResult = "[$title (KTOR)] Error: ${e.message}"
+                } finally {
+                    isLoading = false
+                }
+            }
+        }
+
+        fun performOkHttpAutoRequest(title: String, url: String) {
+            isLoading = true
+            performOkHttpTestRequest(url) { result ->
+                fetchResult = "[$title (OkHttp)] $result"
                 isLoading = false
             }
         }
-    }
 
-    fun performOkHttpAutoRequest(title: String, url: String) {
-        isLoading = true
-        performOkHttpTestRequest(url) { result ->
-            fetchResult = "[$title (OkHttp Auto)] $result"
-            isLoading = false
+        fun performManualLog() {
+            val currentTime = kotlin.time.Clock.System.now().toEpochMilliseconds()
+            Inspecto.addLog(
+                url = "https://api.inspecto.local/v1/manual-action",
+                method = "POST",
+                statusCode = 201,
+                durationMs = 35L,
+                requestHeaders = mapOf("Authorization" to "Bearer secret-token"),
+                requestQueryParams = mapOf("source" to "button"),
+                requestBody = "{\"action\": \"test\", \"time\": $currentTime}",
+                responseBody = "{\"status\": \"success\"}",
+                tag = "Manual"
+            )
+            fetchResult = "Manual log entry added successfully!"
         }
-    }
 
-    fun performManualLog() {
-        val tagToUse = customTag.ifBlank { "Manual" }
-        val currentTime = kotlin.time.Clock.System.now().toEpochMilliseconds()
-        Inspecto.addLog(
-            url = "https://api.inspecto.local/v1/manual-action",
-            method = "POST",
-            statusCode = 201,
-            durationMs = 35L,
-            requestHeaders = mapOf("Authorization" to "Bearer custom-secret-token", "Content-Type" to "application/json"),
-            requestQueryParams = mapOf("source" to "button_click"),
-            requestBody = "{\"action\": \"manual_log_test\", \"user\": \"developer\", \"time\": $currentTime}",
-            responseHeaders = mapOf("Content-Type" to "application/json", "X-Inspecto-Mode" to "Manual"),
-            responseBody = "{\"status\": \"success\", \"message\": \"Manually logged entry successfully stored.\"}".trimIndent(),
-            tag = tagToUse
-        )
-        fetchResult = "Manually logged entry with tag '$tagToUse' added to Inspecto!"
-    }
-
-    MaterialTheme {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text("Inspecto Demo") },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                )
-            }
-        ) { paddingValues ->
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Inspecto Network Inspector Demo",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Button(
-                        onClick = { launchInspecto() },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
+        MaterialTheme(typography = customTypography) {
+            Scaffold(
+                topBar = {
+                    CenterAlignedTopAppBar(
+                        title = { Text("Inspecto") },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Open Inspecto Network Inspector", fontWeight = FontWeight.Bold)
-                    }
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                    // Custom Tag Input
-                    OutlinedTextField(
-                        value = customTag,
-                        onValueChange = { customTag = it },
-                        label = { Text("Custom Log Tag (e.g., Ktor, OkHttp, Auth, Manual)") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(4.dp)
                     )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "Automatic & Manual Logging Examples",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    // 1. Ktor Auto Users
-                    Button(
-                        onClick = { performKtorAutoRequest("Users", "https://jsonplaceholder.typicode.com/users") },
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Fetch Users (Automatic via Ktor Plugin)")
-                    }
-
-                    // 2. OkHttp Auto Posts
-                    Button(
-                        onClick = { performOkHttpAutoRequest("Posts", "https://jsonplaceholder.typicode.com/posts") },
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Fetch Posts (Automatic via OkHttp Interceptor)")
-                    }
-
-                    // 3. Ktor Auto Comments
-                    Button(
-                        onClick = { performKtorAutoRequest("Comments", "https://jsonplaceholder.typicode.com/comments") },
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Fetch Comments (Automatic via Ktor Plugin)")
-                    }
-
-                    // 4. Manual Logging Example
-                    OutlinedButton(
-                        onClick = { performManualLog() },
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Trigger Manual Log Entry Example")
-                    }
-
-                    if (isLoading) {
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
-                    } else {
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
-
-                    // Result card with fixed min height to prevent screen jumping
-                    Card(
+                }
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .heightIn(min = 130.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
+                            .verticalScroll(rememberScrollState()),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Execution Result:",
-                                style = MaterialTheme.typography.labelLarge,
-                                fontWeight = FontWeight.Bold
+                        Button(
+                            onClick = { launchInspecto() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = fetchResult,
-                                style = MaterialTheme.typography.bodyMedium
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Open Inspecto", fontWeight = FontWeight.Bold)
+                        }
+
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                        Button(
+                            onClick = {
+                                performKtorAutoRequest(
+                                    "Users",
+                                    "https://jsonplaceholder.typicode.com/users"
+                                )
+                            },
+                            enabled = !isLoading,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Fetch Users (KTOR)")
+                        }
+
+                        Button(
+                            onClick = {
+                                performKtorAutoRequest(
+                                    "Posts",
+                                    "https://jsonplaceholder.typicode.com/posts"
+                                )
+                            },
+                            enabled = !isLoading,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Fetch Posts (KTOR)")
+                        }
+
+                        Button(
+                            onClick = {
+                                performOkHttpAutoRequest(
+                                    "Posts",
+                                    "https://jsonplaceholder.typicode.com/posts"
+                                )
+                            },
+                            enabled = !isLoading && isOkHttpSupported,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (isOkHttpSupported) "Fetch Posts (OkHttp)" else "Fetch Posts (OkHttp - Android/JVM Only)")
+                        }
+
+                        Button(
+                            onClick = {
+                                performKtorAutoRequest(
+                                    "Comments",
+                                    "https://jsonplaceholder.typicode.com/comments"
+                                )
+                            },
+                            enabled = !isLoading,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Fetch Comments (KTOR)")
+                        }
+
+                        OutlinedButton(
+                            onClick = { performManualLog() },
+                            enabled = !isLoading,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Trigger Manual Log")
+                        }
+
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .alpha(if (isLoading) 1f else 0f)
+                                .padding(vertical = 4.dp)
+                        )
+
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 100.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
                             )
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Result:",
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = fetchResult,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
                     }
                 }

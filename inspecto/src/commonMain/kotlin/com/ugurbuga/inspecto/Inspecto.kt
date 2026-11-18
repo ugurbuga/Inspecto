@@ -13,10 +13,21 @@ object Inspecto {
     private val _logs = MutableStateFlow<List<InspectoLogEntry>>(emptyList())
     val logs: StateFlow<List<InspectoLogEntry>> = _logs.asStateFlow()
 
+    private val _isInspectoOpen = MutableStateFlow(false)
+    val isInspectoOpen: StateFlow<Boolean> = _isInspectoOpen.asStateFlow()
+
     internal var onLaunchCallback: (() -> Unit)? = null
 
     fun launch(context: Any? = null) {
         launchInspecto(context)
+    }
+
+    fun dismiss() {
+        _isInspectoOpen.value = false
+    }
+
+    internal fun setOpen(open: Boolean) {
+        _isInspectoOpen.value = open
     }
 
     internal fun triggerLaunchCallback() {

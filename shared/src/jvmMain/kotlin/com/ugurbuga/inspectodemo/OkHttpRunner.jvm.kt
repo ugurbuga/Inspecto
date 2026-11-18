@@ -20,3 +20,5 @@ actual fun performOkHttpTestRequest(url: String, onResult: (String) -> Unit) {
         }
     }.start()
 }
+
+actual val isOkHttpSupported: Boolean = true
