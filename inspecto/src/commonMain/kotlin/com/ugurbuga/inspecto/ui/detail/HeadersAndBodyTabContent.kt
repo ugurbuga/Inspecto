@@ -1,6 +1,7 @@
 package com.ugurbuga.inspecto.ui.detail
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -8,14 +9,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,11 +43,18 @@ internal fun HeadersAndBodyTabContent(
     onCopyBody: () -> Unit,
     onToast: (String) -> Unit
 ) {
-    // Collapsed by default (Request 6)
     var isHeadersExpanded by remember { mutableStateOf(false) }
     var isQueryParamsExpanded by remember { mutableStateOf(false) }
     var formattedLines by remember { mutableStateOf<List<String>>(emptyList()) }
     var isProcessing by remember { mutableStateOf(true) }
+
+    // Font size zoom state (Request 1)
+    var bodyFontSize by remember { mutableStateOf(13.sp) }
+
+    // In-page search state (Request 2)
+    var isSearchOpen by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var currentMatchIndex by remember { mutableStateOf(0) }
 
     LaunchedEffect(rawBody) {
         isProcessing = true
@@ -50,6 +62,20 @@ internal fun HeadersAndBodyTabContent(
             formattedLines = Inspecto.formatJson(rawBody).lines()
             isProcessing = false
         }
+    }
+
+    val matchingLineIndices = remember(formattedLines, searchQuery) {
+        if (searchQuery.isBlank()) {
+            emptyList()
+        } else {
+            formattedLines.indices.filter { idx ->
+                formattedLines[idx].contains(searchQuery, ignoreCase = true)
+            }
+        }
+    }
+
+    LaunchedEffect(searchQuery) {
+        currentMatchIndex = 0
     }
 
     Column(
@@ -197,14 +223,153 @@ internal fun HeadersAndBodyTabContent(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                if (rawBody.isNotBlank()) {
-                    IconButton(onClick = onCopyBody, modifier = Modifier.size(28.dp)) {
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Search toggle button
+                    IconButton(
+                        onClick = { isSearchOpen = !isSearchOpen },
+                        modifier = Modifier.size(28.dp)
+                    ) {
                         Icon(
-                            Icons.Filled.ContentCopy,
-                            contentDescription = "Copy $sectionTitle Body",
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "Search in body",
+                            tint = if (isSearchOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    // Font Size - Button
+                    IconButton(
+                        onClick = { bodyFontSize = ((bodyFontSize.value - 1f).coerceAtLeast(10f)).sp },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Remove,
+                            contentDescription = "Decrease Font Size",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
                         )
+                    }
+
+                    Text(
+                        text = "${bodyFontSize.value.toInt()}sp",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    // Font Size + Button
+                    IconButton(
+                        onClick = { bodyFontSize = ((bodyFontSize.value + 1f).coerceAtMost(24f)).sp },
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "Increase Font Size",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+
+                    if (rawBody.isNotBlank()) {
+                        IconButton(onClick = onCopyBody, modifier = Modifier.size(28.dp)) {
+                            Icon(
+                                Icons.Filled.ContentCopy,
+                                contentDescription = "Copy $sectionTitle Body",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // In-Page Search Toolbar
+            if (isSearchOpen) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    shape = RoundedCornerShape(6.dp),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            placeholder = { Text("Search in text...", style = MaterialTheme.typography.bodySmall) },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(4.dp)
+                        )
+
+                        val matchCount = matchingLineIndices.size
+                        val matchLabel = if (matchCount > 0) "${currentMatchIndex + 1}/$matchCount" else "0/0"
+
+                        Text(
+                            text = matchLabel,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        // Up Arrow
+                        IconButton(
+                            onClick = {
+                                if (matchCount > 0) {
+                                    currentMatchIndex = (currentMatchIndex - 1 + matchCount) % matchCount
+                                }
+                            },
+                            enabled = matchCount > 0,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.KeyboardArrowUp,
+                                contentDescription = "Previous Match",
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        // Down Arrow
+                        IconButton(
+                            onClick = {
+                                if (matchCount > 0) {
+                                    currentMatchIndex = (currentMatchIndex + 1) % matchCount
+                                }
+                            },
+                            enabled = matchCount > 0,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.KeyboardArrowDown,
+                                contentDescription = "Next Match",
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        // Close Search
+                        IconButton(
+                            onClick = {
+                                isSearchOpen = false
+                                searchQuery = ""
+                            },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Close Search",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -267,12 +432,29 @@ internal fun HeadersAndBodyTabContent(
                                                 isDarkTheme
                                             )
                                         }
-                                        Text(
-                                            text = highlightedLine,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            lineHeight = 18.sp,
-                                            fontFamily = FontFamily.Monospace
-                                        )
+
+                                        val matchCount = matchingLineIndices.size
+                                        val isMatchedLine = index in matchingLineIndices
+                                        val isActiveMatch = matchCount > 0 && matchingLineIndices.getOrNull(currentMatchIndex) == index
+
+                                        val lineBg = when {
+                                            isActiveMatch -> if (isDarkTheme) Color(0xFF78350F) else Color(0xFFFEF08A)
+                                            isMatchedLine -> if (isDarkTheme) Color(0xFF334155) else Color(0xFFFEF9C3)
+                                            else -> Color.Transparent
+                                        }
+
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(lineBg, RoundedCornerShape(2.dp))
+                                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                                        ) {
+                                            Text(
+                                                text = highlightedLine,
+                                                style = MaterialTheme.typography.bodySmall.copy(fontSize = bodyFontSize),
+                                                lineHeight = (bodyFontSize.value * 1.4f).sp
+                                            )
+                                        }
                                     }
                                 }
                             }
