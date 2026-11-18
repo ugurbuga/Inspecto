@@ -36,6 +36,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,6 +47,7 @@ import com.ugurbuga.inspecto.ui.bottomsheets.FilterBottomSheet
 import com.ugurbuga.inspecto.ui.bottomsheets.SortBottomSheet
 import com.ugurbuga.inspecto.ui.components.HeaderStatsTable
 import com.ugurbuga.inspecto.ui.components.TransactionCard
+import com.ugurbuga.inspecto.ui.components.noRippleClickable
 import com.ugurbuga.inspecto.ui.detail.InspectoDetailScreen
 import com.ugurbuga.inspecto.ui.theme.InspectoTheme
 
@@ -104,6 +107,9 @@ private fun InspectoScreenContent(
 
     var isFilterBottomSheetOpen by remember { mutableStateOf(false) }
     var isSortBottomSheetOpen by remember { mutableStateOf(false) }
+
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     BackHandler(enabled = selectedEntry != null) {
         selectedEntry = null
@@ -183,7 +189,12 @@ private fun InspectoScreenContent(
     }
 
     Surface(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .noRippleClickable {
+                focusManager.clearFocus()
+                keyboardController?.hide()
+            },
         color = MaterialTheme.colorScheme.surface
     ) {
         if (selectedEntry != null) {

@@ -13,6 +13,11 @@ plugins {
 group = "com.ugurbuga"
 version = "1.0.0-alpha04"
 
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.ugurbuga.inspecto.generated.resources"
+}
+
 kotlin {
     listOf(
         iosArm64(),

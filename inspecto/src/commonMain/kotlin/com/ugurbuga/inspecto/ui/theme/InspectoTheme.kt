@@ -7,6 +7,7 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 
 val DarkBackgroundColor = Color(0xFF0F172A)
 
@@ -47,27 +48,27 @@ val InspectoDarkColorScheme = darkColorScheme(
 @Composable
 internal fun InspectoTheme(
     isDarkTheme: Boolean,
+    fontFamily: FontFamily = getInspectoFontFamily(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (isDarkTheme) InspectoDarkColorScheme else InspectoLightColorScheme
-    val outfitFontFamily = getInspectoFontFamily()
 
     val customTypography = Typography(
-        displayLarge = TextStyle(fontFamily = outfitFontFamily),
-        displayMedium = TextStyle(fontFamily = outfitFontFamily),
-        displaySmall = TextStyle(fontFamily = outfitFontFamily),
-        headlineLarge = TextStyle(fontFamily = outfitFontFamily),
-        headlineMedium = TextStyle(fontFamily = outfitFontFamily),
-        headlineSmall = TextStyle(fontFamily = outfitFontFamily),
-        titleLarge = TextStyle(fontFamily = outfitFontFamily),
-        titleMedium = TextStyle(fontFamily = outfitFontFamily),
-        titleSmall = TextStyle(fontFamily = outfitFontFamily),
-        bodyLarge = TextStyle(fontFamily = outfitFontFamily),
-        bodyMedium = TextStyle(fontFamily = outfitFontFamily),
-        bodySmall = TextStyle(fontFamily = outfitFontFamily),
-        labelLarge = TextStyle(fontFamily = outfitFontFamily),
-        labelMedium = TextStyle(fontFamily = outfitFontFamily),
-        labelSmall = TextStyle(fontFamily = outfitFontFamily)
+        displayLarge = TextStyle(fontFamily = fontFamily),
+        displayMedium = TextStyle(fontFamily = fontFamily),
+        displaySmall = TextStyle(fontFamily = fontFamily),
+        headlineLarge = TextStyle(fontFamily = fontFamily),
+        headlineMedium = TextStyle(fontFamily = fontFamily),
+        headlineSmall = TextStyle(fontFamily = fontFamily),
+        titleLarge = TextStyle(fontFamily = fontFamily),
+        titleMedium = TextStyle(fontFamily = fontFamily),
+        titleSmall = TextStyle(fontFamily = fontFamily),
+        bodyLarge = TextStyle(fontFamily = fontFamily),
+        bodyMedium = TextStyle(fontFamily = fontFamily),
+        bodySmall = TextStyle(fontFamily = fontFamily),
+        labelLarge = TextStyle(fontFamily = fontFamily),
+        labelMedium = TextStyle(fontFamily = fontFamily),
+        labelSmall = TextStyle(fontFamily = fontFamily)
     )
 
     MaterialTheme(
