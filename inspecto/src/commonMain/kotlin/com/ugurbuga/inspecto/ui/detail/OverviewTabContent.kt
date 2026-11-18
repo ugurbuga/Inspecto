@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ugurbuga.inspecto.InspectoLogEntry
@@ -85,7 +84,6 @@ internal fun OverviewTabContent(
                             text = entry.url,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontFamily = FontFamily.Monospace,
                             modifier = Modifier.weight(1f)
                         )
                         IconButton(
@@ -93,7 +91,7 @@ internal fun OverviewTabContent(
                             modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.ContentCopy,
+                                imageVector =Icons.Filled.ContentCopy,
                                 contentDescription = "Copy Request URL",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
@@ -155,7 +153,7 @@ internal fun OverviewTabContent(
                 }
             }
 
-            // cURL Button placed below Overview Details section as a Half-Width button (Request 5)
+            // cURL Button placed below Overview Details section as a Half-Width button
             Button(
                 onClick = onCopyCurl,
                 shape = RoundedCornerShape(4.dp),

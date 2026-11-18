@@ -4,7 +4,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 
 internal object InspectoJsonSyntaxHighlighter {
@@ -67,14 +66,14 @@ internal object InspectoJsonSyntaxHighlighter {
                             append(
                                 AnnotatedString(
                                     text = strToken,
-                                    spanStyle = SpanStyle(color = keyColor, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                                    spanStyle = SpanStyle(color = keyColor, fontWeight = FontWeight.Bold)
                                 )
                             )
                         } else {
                             append(
                                 AnnotatedString(
                                     text = strToken,
-                                    spanStyle = SpanStyle(color = stringColor, fontFamily = FontFamily.Monospace)
+                                    spanStyle = SpanStyle(color = stringColor)
                                 )
                             )
                         }
@@ -91,7 +90,7 @@ internal object InspectoJsonSyntaxHighlighter {
                         append(
                             AnnotatedString(
                                 text = numToken,
-                                spanStyle = SpanStyle(color = numberColor, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                                spanStyle = SpanStyle(color = numberColor, fontWeight = FontWeight.Bold)
                             )
                         )
                     }
@@ -101,7 +100,7 @@ internal object InspectoJsonSyntaxHighlighter {
                         append(
                             AnnotatedString(
                                 text = "true",
-                                spanStyle = SpanStyle(color = booleanColor, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                                spanStyle = SpanStyle(color = booleanColor, fontWeight = FontWeight.Bold)
                             )
                         )
                         i += 4
@@ -110,7 +109,7 @@ internal object InspectoJsonSyntaxHighlighter {
                         append(
                             AnnotatedString(
                                 text = "false",
-                                spanStyle = SpanStyle(color = booleanColor, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                                spanStyle = SpanStyle(color = booleanColor, fontWeight = FontWeight.Bold)
                             )
                         )
                         i += 5
@@ -121,7 +120,7 @@ internal object InspectoJsonSyntaxHighlighter {
                         append(
                             AnnotatedString(
                                 text = "null",
-                                spanStyle = SpanStyle(color = nullColor, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+                                spanStyle = SpanStyle(color = nullColor, fontWeight = FontWeight.Bold)
                             )
                         )
                         i += 4
@@ -132,7 +131,7 @@ internal object InspectoJsonSyntaxHighlighter {
                         append(
                             AnnotatedString(
                                 text = char.toString(),
-                                spanStyle = SpanStyle(color = punctuationColor, fontWeight = FontWeight.Medium, fontFamily = FontFamily.Monospace)
+                                spanStyle = SpanStyle(color = punctuationColor, fontWeight = FontWeight.Medium)
                             )
                         )
                         i++
