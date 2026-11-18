@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.github.ugurbuga"
-version = "1.0.0-alpha02"
+version = "1.0.0-alpha03"
 
 kotlin {
     listOf(
