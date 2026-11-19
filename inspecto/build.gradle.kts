@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.ugurbuga"
-version = "1.0.0-alpha05"
+version = "1.0.0-alpha06"
 
 compose.resources {
     publicResClass = true
@@ -51,10 +51,10 @@ kotlin {
             api(libs.androidx.activity.compose)
             api(compose.uiTooling)
             api(libs.compose.uiToolingPreview)
-            api(libs.okhttp)
+            implementation(libs.okhttp)
         }
         jvmMain.dependencies {
-            api(libs.okhttp)
+            implementation(libs.okhttp)
         }
         commonMain.dependencies {
             api(compose.components.resources)
@@ -68,7 +68,8 @@ kotlin {
             api(libs.androidx.lifecycle.runtimeCompose)
             api(libs.kotlinx.serialization.json)
             api(libs.kotlinx.datetime)
-            api(libs.ktor.client.core)
+            implementation(libs.ktor.client.core)
+            implementation(libs.apollo.runtime)
         }
     }
 }

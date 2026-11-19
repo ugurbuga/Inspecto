@@ -7,6 +7,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
 object Inspecto {
+    var customFontFamily: androidx.compose.ui.text.font.FontFamily? = null
+
     private const val MAX_LOG_CAPACITY = 100
     private val jsonFormatter = Json { prettyPrint = true; ignoreUnknownKeys = true }
 

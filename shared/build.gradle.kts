@@ -9,9 +9,6 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
-group = "com.ugurbuga"
-version = "1.0.0-alpha05"
-
 kotlin {
     listOf(
         iosArm64(),
@@ -73,6 +70,7 @@ kotlin {
             api(libs.kotlinx.serialization.json)
             api(libs.kotlinx.datetime)
             api(libs.ktor.client.core)
+            implementation(libs.apollo.runtime)
             api(libs.ktor.client.content.negotiation)
             api(libs.ktor.serialization.kotlinx.json)
             api(libs.coil.compose)
@@ -103,4 +101,9 @@ kotlin {
 
 dependencies {
     androidRuntimeClasspath(compose.uiTooling)
+}
+
+compose.resources {
+    publicResClass = true
+    packageOfResClass = "com.ugurbuga.inspectodemo.shared.generated.resources"
 }

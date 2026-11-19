@@ -105,6 +105,8 @@ internal fun TransactionCard(
                         val tagColor = when {
                             entry.tag.contains("Ktor", ignoreCase = true) -> Color(0xFF8B5CF6)
                             entry.tag.contains("OkHttp", ignoreCase = true) -> Color(0xFFF59E0B)
+                            entry.tag.contains("GraphQL", ignoreCase = true) -> Color(0xFFEC4899)
+                            entry.tag.contains("NSURLSession", ignoreCase = true) -> Color(0xFF10B981)
                             entry.tag.equals("Manual", ignoreCase = true) -> Color(0xFF0EA5E9)
                             else -> Color(0xFF10B981)
                         }
