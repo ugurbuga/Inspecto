@@ -2,7 +2,17 @@ package com.ugurbuga.inspecto.ui.detail
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,18 +26,35 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Preview
 import com.ugurbuga.inspecto.Inspecto
 import com.ugurbuga.inspecto.InspectoJsonSyntaxHighlighter
-import com.ugurbuga.inspecto.res.InspectoStrings
+import com.ugurbuga.inspecto.generated.resources.Res
+import com.ugurbuga.inspecto.generated.resources.empty_body
+import com.ugurbuga.inspecto.generated.resources.formatting_payload
+import org.jetbrains.compose.resources.stringResource
 import com.ugurbuga.inspecto.ui.components.noRippleClickable
+import com.ugurbuga.inspecto.ui.theme.InspectoLightColorScheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -243,7 +270,9 @@ internal fun HeadersAndBodyTabContent(
 
                     // Font Size - Button
                     IconButton(
-                        onClick = { bodyFontSize = ((bodyFontSize.value - 1f).coerceAtLeast(10f)).sp },
+                        onClick = {
+                            bodyFontSize = ((bodyFontSize.value - 1f).coerceAtLeast(10f)).sp
+                        },
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
@@ -255,7 +284,7 @@ internal fun HeadersAndBodyTabContent(
                     }
 
                     Text(
-                        text = "${bodyFontSize.value.toInt()}sp",
+                        text = bodyFontSize.value.toInt().toString(),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -263,7 +292,9 @@ internal fun HeadersAndBodyTabContent(
 
                     // Font Size + Button
                     IconButton(
-                        onClick = { bodyFontSize = ((bodyFontSize.value + 1f).coerceAtMost(24f)).sp },
+                        onClick = {
+                            bodyFontSize = ((bodyFontSize.value + 1f).coerceAtMost(24f)).sp
+                        },
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
@@ -291,8 +322,11 @@ internal fun HeadersAndBodyTabContent(
             if (isSearchOpen) {
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = RoundedCornerShape(6.dp),
-                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(4.dp),
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                    ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -305,7 +339,12 @@ internal fun HeadersAndBodyTabContent(
                         OutlinedTextField(
                             value = searchQuery,
                             onValueChange = { searchQuery = it },
-                            placeholder = { Text("Search in text...", style = MaterialTheme.typography.bodySmall) },
+                            placeholder = {
+                                Text(
+                                    "Search in text...",
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            },
                             singleLine = true,
                             textStyle = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.weight(1f),
@@ -313,7 +352,8 @@ internal fun HeadersAndBodyTabContent(
                         )
 
                         val matchCount = matchingLineIndices.size
-                        val matchLabel = if (matchCount > 0) "${currentMatchIndex + 1}/$matchCount" else "0/0"
+                        val matchLabel =
+                            if (matchCount > 0) "${currentMatchIndex + 1}/$matchCount" else "0/0"
 
                         Text(
                             text = matchLabel,
@@ -326,7 +366,8 @@ internal fun HeadersAndBodyTabContent(
                         IconButton(
                             onClick = {
                                 if (matchCount > 0) {
-                                    currentMatchIndex = (currentMatchIndex - 1 + matchCount) % matchCount
+                                    currentMatchIndex =
+                                        (currentMatchIndex - 1 + matchCount) % matchCount
                                 }
                             },
                             enabled = matchCount > 0,
@@ -387,7 +428,7 @@ internal fun HeadersAndBodyTabContent(
                     when {
                         rawBody.isBlank() -> {
                             Text(
-                                text = InspectoStrings.EMPTY_BODY,
+                                text = stringResource(Res.string.empty_body),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.outline
                             )
@@ -407,7 +448,7 @@ internal fun HeadersAndBodyTabContent(
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 Text(
-                                    text = InspectoStrings.FORMATTING_PAYLOAD,
+                                    text = stringResource(Res.string.formatting_payload),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -435,11 +476,20 @@ internal fun HeadersAndBodyTabContent(
 
                                         val matchCount = matchingLineIndices.size
                                         val isMatchedLine = index in matchingLineIndices
-                                        val isActiveMatch = matchCount > 0 && matchingLineIndices.getOrNull(currentMatchIndex) == index
+                                        val isActiveMatch =
+                                            matchCount > 0 && matchingLineIndices.getOrNull(
+                                                currentMatchIndex
+                                            ) == index
 
                                         val lineBg = when {
-                                            isActiveMatch -> if (isDarkTheme) Color(0xFF78350F) else Color(0xFFFEF08A)
-                                            isMatchedLine -> if (isDarkTheme) Color(0xFF334155) else Color(0xFFFEF9C3)
+                                            isActiveMatch -> if (isDarkTheme) Color(0xFF78350F) else Color(
+                                                0xFFFEF08A
+                                            )
+
+                                            isMatchedLine -> if (isDarkTheme) Color(0xFF334155) else Color(
+                                                0xFFFEF9C3
+                                            )
+
                                             else -> Color.Transparent
                                         }
 
@@ -451,7 +501,9 @@ internal fun HeadersAndBodyTabContent(
                                         ) {
                                             Text(
                                                 text = highlightedLine,
-                                                style = MaterialTheme.typography.bodySmall.copy(fontSize = bodyFontSize),
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    fontSize = bodyFontSize
+                                                ),
                                                 lineHeight = (bodyFontSize.value * 1.4f).sp
                                             )
                                         }
@@ -462,6 +514,26 @@ internal fun HeadersAndBodyTabContent(
                     }
                 }
             }
+        }
+    }
+}
+
+@Preview(name = "Headers And Body Tab Content - Light")
+@Composable
+internal fun HeadersAndBodyTabContentPreview() {
+    MaterialTheme(colorScheme = InspectoLightColorScheme) {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            HeadersAndBodyTabContent(
+                sectionTitle = "Response",
+                queryParams = emptyMap(),
+                headers = mapOf("Content-Type" to "application/json"),
+                rawBody = "[\n  {\n    \"id\": 1,\n    \"name\": \"John Doe\"\n  }\n]",
+                isDarkTheme = false,
+                onCopyHeaders = {},
+                onCopyQueryParams = {},
+                onCopyBody = {},
+                onToast = {}
+            )
         }
     }
 }

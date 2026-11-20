@@ -15,8 +15,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import com.ugurbuga.inspecto.InspectoLogEntry
-import com.ugurbuga.inspecto.res.InspectoStrings
+import com.ugurbuga.inspecto.generated.resources.Res
+import com.ugurbuga.inspecto.generated.resources.copy_curl
+import com.ugurbuga.inspecto.generated.resources.overview_details
+import com.ugurbuga.inspecto.ui.theme.InspectoLightColorScheme
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun OverviewTabContent(
@@ -34,15 +39,12 @@ internal fun OverviewTabContent(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Top Request URL Card with Copy Button aligned on Far Right
+            // URL Card
             Surface(
-                color = MaterialTheme.colorScheme.surfaceContainer,
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(4.dp),
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                ),
-                modifier = Modifier.fillMaxWidth()
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
             ) {
                 Column(
                     modifier = Modifier
@@ -56,60 +58,38 @@ internal fun OverviewTabContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = entry.method,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        Surface(
-                            color = if (entry.isSuccess) Color(0xFF10B981) else Color(0xFFEF4444),
-                            shape = RoundedCornerShape(4.dp)
-                        ) {
-                            Text(
-                                text = "${entry.statusCode}",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = entry.url,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.weight(1f)
+                            text = "URL",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         IconButton(
                             onClick = onCopyUrl,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                imageVector =Icons.Filled.ContentCopy,
-                                contentDescription = "Copy Request URL",
+                                imageVector = Icons.Filled.ContentCopy,
+                                contentDescription = "Copy URL",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
                             )
                         }
                     }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
+                    Text(
+                        text = entry.url,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 
             // Overview Details Card
             Surface(
-                color = MaterialTheme.colorScheme.surfaceContainer,
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(4.dp),
-                border = BorderStroke(
-                    1.dp,
-                    MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
-                ),
-                modifier = Modifier.fillMaxWidth()
+                color = MaterialTheme.colorScheme.surfaceContainer,
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
             ) {
                 Column(
                     modifier = Modifier
@@ -123,7 +103,7 @@ internal fun OverviewTabContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = InspectoStrings.OVERVIEW_DETAILS,
+                            text = stringResource(Res.string.overview_details),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurface
@@ -166,11 +146,36 @@ internal fun OverviewTabContent(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    InspectoStrings.COPY_CURL,
+                    stringResource(Res.string.copy_curl),
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.labelMedium
                 )
             }
+        }
+    }
+}
+
+@Preview(name = "Overview Tab Content - Light")
+@Composable
+internal fun OverviewTabContentPreview() {
+    val sampleEntry = InspectoLogEntry(
+        id = "1",
+        url = "https://api.example.com/v1/users",
+        method = "GET",
+        statusCode = 200,
+        durationMs = 120L,
+        responseSizeByte = 1042L,
+        tag = "Ktor"
+    )
+    MaterialTheme(colorScheme = InspectoLightColorScheme) {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            OverviewTabContent(
+                entry = sampleEntry,
+                onCopyCurl = {},
+                onCopyUrl = {},
+                onCopyOverviewDetails = {},
+                onToast = {}
+            )
         }
     }
 }

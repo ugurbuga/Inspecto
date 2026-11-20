@@ -11,6 +11,7 @@ object Inspecto {
 
     private const val MAX_LOG_CAPACITY = 100
     private val jsonFormatter = Json { prettyPrint = true; ignoreUnknownKeys = true }
+    private val storageJsonFormatter = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
     private val _logs = MutableStateFlow<List<InspectoLogEntry>>(emptyList())
     val logs: StateFlow<List<InspectoLogEntry>> = _logs.asStateFlow()
@@ -19,6 +20,10 @@ object Inspecto {
     val isInspectoOpen: StateFlow<Boolean> = _isInspectoOpen.asStateFlow()
 
     internal var onLaunchCallback: (() -> Unit)? = null
+
+    init {
+        loadPersistedLogs()
+    }
 
     fun launch(context: Any? = null) {
         launchInspecto(context)
@@ -36,6 +41,10 @@ object Inspecto {
         onLaunchCallback?.invoke()
     }
 
+    fun requestNotificationPermission(onResult: (Boolean) -> Unit = {}) {
+        InspectoNotification.requestPermission(onResult)
+    }
+
     fun addLog(entry: InspectoLogEntry) {
         val updated = (_logs.value.toMutableList()).apply {
             add(0, entry)
@@ -44,6 +53,10 @@ object Inspecto {
             }
         }
         _logs.value = updated
+        persistLogs()
+        runCatching {
+            InspectoNotification.showServiceCallNotification(entry)
+        }
     }
 
     fun addLog(
@@ -78,6 +91,9 @@ object Inspecto {
 
     fun clear() {
         _logs.value = emptyList()
+        runCatching {
+            InspectoStorage.clearLogs()
+        }
     }
 
     fun formatJson(raw: String): String {
@@ -86,6 +102,23 @@ object Inspecto {
             val element = jsonFormatter.parseToJsonElement(raw)
             jsonFormatter.encodeToString(JsonElement.serializer(), element)
         }.getOrDefault(raw)
+    }
+
+    private fun loadPersistedLogs() {
+        runCatching {
+            val json = InspectoStorage.loadLogsJson()
+            if (!json.isNullOrBlank()) {
+                val loaded = storageJsonFormatter.decodeFromString<List<InspectoLogEntry>>(json)
+                _logs.value = loaded.take(MAX_LOG_CAPACITY)
+            }
+        }
+    }
+
+    private fun persistLogs() {
+        runCatching {
+            val json = storageJsonFormatter.encodeToString(_logs.value)
+            InspectoStorage.saveLogsJson(json)
+        }
     }
 
     private fun generateUniqueId(): String {

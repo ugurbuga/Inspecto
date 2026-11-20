@@ -1,6 +1,5 @@
 package com.ugurbuga.inspecto.ui.bottomsheets
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,20 +12,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.ugurbuga.inspecto.res.InspectoStrings
+import androidx.compose.ui.tooling.preview.Preview
+import com.ugurbuga.inspecto.generated.resources.Res
+import com.ugurbuga.inspecto.generated.resources.apply_filters
+import com.ugurbuga.inspecto.generated.resources.combination_mode
+import com.ugurbuga.inspecto.generated.resources.filter_requests_title
+import com.ugurbuga.inspecto.generated.resources.full_url
+import com.ugurbuga.inspecto.generated.resources.mode_and_desc
+import com.ugurbuga.inspecto.generated.resources.mode_or_desc
+import com.ugurbuga.inspecto.generated.resources.path_only
+import com.ugurbuga.inspecto.generated.resources.reset
+import com.ugurbuga.inspecto.generated.resources.select_chips
+import com.ugurbuga.inspecto.generated.resources.url_display_mode
+import com.ugurbuga.inspecto.ui.theme.InspectoLightColorScheme
 import com.ugurbuga.inspecto.ui.theme.InspectoTheme
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun FilterBottomSheet(
     selectedFilters: Set<String>,
     filterMode: String,
+    urlDisplayMode: String,
     isDarkTheme: Boolean,
-    onApply: (selectedFilters: Set<String>, filterMode: String) -> Unit,
+    onApply: (selectedFilters: Set<String>, filterMode: String, urlDisplayMode: String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var tempFilters by remember { mutableStateOf(selectedFilters) }
     var tempMode by remember { mutableStateOf(filterMode) }
+    var tempUrlMode by remember { mutableStateOf(urlDisplayMode) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     InspectoTheme(isDarkTheme = isDarkTheme) {
@@ -50,25 +64,25 @@ internal fun FilterBottomSheet(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        InspectoStrings.FILTER_REQUESTS_TITLE,
+                        stringResource(Res.string.filter_requests_title),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     TextButton(onClick = { tempFilters = emptySet() }) {
-                        Text("Reset", style = MaterialTheme.typography.labelMedium)
+                        Text(stringResource(Res.string.reset), style = MaterialTheme.typography.labelMedium)
                     }
                 }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
 
-                // Combination Mode Card
+                // URL Display Mode Card (Full URL vs Path Only)
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        InspectoStrings.COMBINATION_MODE,
+                        stringResource(Res.string.url_display_mode),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -76,15 +90,15 @@ internal fun FilterBottomSheet(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(4.dp))
                             .padding(4.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        listOf("AND", "OR").forEach { mode ->
-                            val selected = tempMode == mode
+                        listOf("FULL", "PATH").forEach { mode ->
+                            val selected = tempUrlMode == mode
                             Surface(
-                                onClick = { tempMode = mode },
-                                shape = RoundedCornerShape(8.dp),
+                                onClick = { tempUrlMode = mode },
+                                shape = RoundedCornerShape(4.dp),
                                 color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
                                 modifier = Modifier
                                     .weight(1f)
@@ -92,7 +106,48 @@ internal fun FilterBottomSheet(
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Text(
-                                        text = if (mode == "AND") InspectoStrings.MODE_AND_DESC else InspectoStrings.MODE_OR_DESC,
+                                        text = if (mode == "FULL") stringResource(Res.string.full_url) else stringResource(Res.string.path_only),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Combination Mode Card
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        stringResource(Res.string.combination_mode),
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(4.dp))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        listOf("AND", "OR").forEach { mode ->
+                            val selected = tempMode == mode
+                            Surface(
+                                onClick = { tempMode = mode },
+                                shape = RoundedCornerShape(4.dp),
+                                color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(40.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Text(
+                                        text = if (mode == "AND") stringResource(Res.string.mode_and_desc) else stringResource(Res.string.mode_or_desc),
                                         style = MaterialTheme.typography.labelMedium,
                                         fontWeight = FontWeight.Bold,
                                         color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
@@ -109,7 +164,7 @@ internal fun FilterBottomSheet(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        InspectoStrings.SELECT_CHIPS,
+                        stringResource(Res.string.select_chips),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -140,7 +195,7 @@ internal fun FilterBottomSheet(
                                 label = {
                                     Text(
                                         filter,
-                                        fontWeight = FontWeight.Normal // Request 2: not bold when selected
+                                        fontWeight = FontWeight.Normal
                                     )
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
@@ -150,7 +205,7 @@ internal fun FilterBottomSheet(
                                     selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                     selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
                                 ),
-                                shape = RoundedCornerShape(8.dp)
+                                shape = RoundedCornerShape(4.dp)
                             )
                         }
                     }
@@ -160,19 +215,36 @@ internal fun FilterBottomSheet(
 
                 Button(
                     onClick = {
-                        onApply(tempFilters, tempMode)
+                        onApply(tempFilters, tempMode, tempUrlMode)
                         onDismiss()
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
-                    shape = RoundedCornerShape(8.dp)
+                    shape = RoundedCornerShape(4.dp)
                 ) {
-                    Text(InspectoStrings.APPLY_FILTERS, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(Res.string.apply_filters), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))
             }
+        }
+    }
+}
+
+@Preview(name = "Filter Bottom Sheet - Light")
+@Composable
+internal fun FilterBottomSheetPreview() {
+    MaterialTheme(colorScheme = InspectoLightColorScheme) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            FilterBottomSheet(
+                selectedFilters = setOf("GET", "2XX"),
+                filterMode = "AND",
+                urlDisplayMode = "FULL",
+                isDarkTheme = false,
+                onApply = { _, _, _ -> },
+                onDismiss = {}
+            )
         }
     }
 }

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ======================================== -->
+    <!-- Non-Translatable (Brand & Technical)      -->
+    <!-- ======================================== -->
+    <string name="app_title" translatable="false">Inspecto</string>
+    <string name="method_get" translatable="false">GET</string>
+    <string name="method_post" translatable="false">POST</string>
+    <string name="method_put" translatable="false">PUT</string>
+    <string name="method_delete" translatable="false">DELETE</string>
+    <string name="method_patch" translatable="false">PATCH</string>
+    <string name="method_options" translatable="false">OPTIONS</string>
+    <string name="method_head" translatable="false">HEAD</string>
+    <string name="status_2xx" translatable="false">2XX</string>
+
+    <!-- ======================================== -->
+    <!-- Header & Stats Titles                    -->
+    <!-- ======================================== -->
+    <string name="total_requests">Total Requests</string>
+    <string name="success_2xx">Success (2XX)</string>
+    <string name="errors">Errors</string>
+    <string name="avg_duration">Avg Duration</string>
+
+    <!-- ======================================== -->
+    <!-- Search & Empty States                    -->
+    <!-- ======================================== -->
+    <string name="search_placeholder">Search URL, method, status, tag...</string>
+    <string name="no_network_calls_title">No Network Calls Captured</string>
+    <string name="no_network_calls_subtitle">HTTP requests and responses will be logged here in real-time.</string>
+
+    <!-- ======================================== -->
+    <!-- Filter Bottom Sheet                      -->
+    <!-- ======================================== -->
+    <string name="filter_requests_title">Filter Requests</string>
+    <string name="url_display_mode">URL DISPLAY MODE</string>
+    <string name="full_url">Full URL</string>
+    <string name="path_only">Path Only</string>
+    <string name="combination_mode">Combination Mode</string>
+    <string name="mode_and_desc">AND (Match All)</string>
+    <string name="mode_or_desc">OR (Match Any)</string>
+    <string name="select_chips">Select Method / Status Chips:</string>
+    <string name="apply_filters">Apply Filters</string>
+    <string name="reset">Reset</string>
+
+    <!-- ======================================== -->
+    <!-- Sort Bottom Sheet                        -->
+    <!-- ======================================== -->
+    <string name="sort_requests_title">Sort Requests</string>
+    <string name="apply_sort">Apply Sort</string>
+
+    <!-- ======================================== -->
+    <!-- Detail Screen Tabs & Actions             -->
+    <!-- ======================================== -->
+    <string name="overview_tab" translatable="false">OVERVIEW</string>
+    <string name="request_tab" translatable="false">REQUEST</string>
+    <string name="response_tab" translatable="false">RESPONSE</string>
+    <string name="overview_details">Overview Details</string>
+    <string name="copy_curl">Copy cURL</string>
+    <string name="copy_url">Copy URL</string>
+    <string name="formatting_payload">Formatting payload...</string>
+    <string name="empty_body">(Empty Body)</string>
+</resources>

@@ -1,8 +1,14 @@
 package com.ugurbuga.inspectodemo
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,38 +20,47 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Http
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ugurbuga.inspecto.Inspecto
 import com.ugurbuga.inspecto.InspectoApp
 import com.ugurbuga.inspecto.launchInspecto
 import com.ugurbuga.inspectodemo.shared.generated.resources.Res
@@ -56,37 +71,22 @@ import org.jetbrains.compose.resources.Font
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
+    LaunchedEffect(Unit) {
+        Inspecto.requestNotificationPermission()
+    }
+
     val outfitFont = FontFamily(Font(Res.font.outfit))
     InspectoApp(fontFamily = outfitFont) {
-        val coroutineScope = rememberCoroutineScope()
         var isLoading by remember { mutableStateOf(false) }
-
-        val snackbarHostState = remember { SnackbarHostState() }
-        var snackbarColor by remember { mutableStateOf(Color(0xFF2563EB)) }
-        var snackbarContentColor by remember { mutableStateOf(Color.White) }
-
-        fun showMessage(msg: String, containerColor: Color, contentColor: Color = Color.White) {
-            snackbarColor = containerColor
-            snackbarContentColor = contentColor
-            coroutineScope.launch {
-                snackbarHostState.currentSnackbarData?.dismiss()
-                snackbarHostState.showSnackbar(msg)
-            }
-        }
 
         InspectoDemoContent(
             isLoading = isLoading,
-            snackbarHostState = snackbarHostState,
-            snackbarColor = snackbarColor,
-            snackbarContentColor = snackbarContentColor,
             onUsersClick = {
                 isLoading = true
-                coroutineScope.launch {
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
                     try {
-                        val result = InspectoKtorRunner.fetchUsers()
-                        showMessage("[Users (KTOR)] $result", Color(0xFF2563EB))
-                    } catch (e: Exception) {
-                        showMessage("[Users (KTOR)] Error: ${e.message}", Color(0xFFE11D48))
+                        InspectoKtorRunner.fetchUsers()
+                    } catch (_: Exception) {
                     } finally {
                         isLoading = false
                     }
@@ -94,12 +94,10 @@ fun App() {
             },
             onPostsGetClick = {
                 isLoading = true
-                coroutineScope.launch {
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
                     try {
-                        val result = InspectoKtorRunner.fetchPosts()
-                        showMessage("[Posts (GET)] $result", Color(0xFF0EA5E9))
-                    } catch (e: Exception) {
-                        showMessage("[Posts (GET)] Error: ${e.message}", Color(0xFFE11D48))
+                        InspectoKtorRunner.fetchPosts()
+                    } catch (_: Exception) {
                     } finally {
                         isLoading = false
                     }
@@ -107,39 +105,10 @@ fun App() {
             },
             onPostsPostClick = {
                 isLoading = true
-                coroutineScope.launch {
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
                     try {
-                        val result = InspectoKtorRunner.submitPost()
-                        showMessage("[Posts (POST)] $result", Color(0xFF10B981))
-                    } catch (e: Exception) {
-                        showMessage("[Posts (POST)] Error: ${e.message}", Color(0xFFE11D48))
-                    } finally {
-                        isLoading = false
-                    }
-                }
-            },
-            onOkHttpClick = {
-                isLoading = true
-                performOkHttpTestRequest("https://jsonplaceholder.typicode.com/posts") { result ->
-                    showMessage("[Posts (OkHttp)] $result", Color(0xFFF59E0B))
-                    isLoading = false
-                }
-            },
-            onNSURLSessionClick = {
-                isLoading = true
-                performNSURLSessionTestRequest("https://jsonplaceholder.typicode.com/posts") { result ->
-                    showMessage("[Posts (NSURLSession)] $result", Color(0xFFF59E0B))
-                    isLoading = false
-                }
-            },
-            onApolloClick = {
-                isLoading = true
-                coroutineScope.launch {
-                    try {
-                        val result = InspectoApolloRunner.executeQuery()
-                        showMessage("[Apollo] $result", Color(0xFFEC4899))
-                    } catch (e: Exception) {
-                        showMessage("[Apollo] Error: ${e.message}", Color(0xFFE11D48))
+                        InspectoKtorRunner.submitPost()
+                    } catch (_: Exception) {
                     } finally {
                         isLoading = false
                     }
@@ -147,12 +116,55 @@ fun App() {
             },
             onCommentsClick = {
                 isLoading = true
-                coroutineScope.launch {
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
                     try {
-                        val result = InspectoKtorRunner.fetchComments()
-                        showMessage("[Comments (KTOR)] $result", Color(0xFF8B5CF6))
-                    } catch (e: Exception) {
-                        showMessage("[Comments (KTOR)] Error: ${e.message}", Color(0xFFE11D48))
+                        InspectoKtorRunner.fetchComments()
+                    } catch (_: Exception) {
+                    } finally {
+                        isLoading = false
+                    }
+                }
+            },
+            onErr400Click = {
+                isLoading = true
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+                    try {
+                        InspectoKtorRunner.triggerBadRequest400()
+                    } catch (_: Exception) {
+                    } finally {
+                        isLoading = false
+                    }
+                }
+            },
+            onErr500Click = {
+                isLoading = true
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+                    try {
+                        InspectoKtorRunner.triggerServerError500()
+                    } catch (_: Exception) {
+                    } finally {
+                        isLoading = false
+                    }
+                }
+            },
+            onOkHttpClick = {
+                isLoading = true
+                performOkHttpTestRequest("https://jsonplaceholder.typicode.com/posts") { _ ->
+                    isLoading = false
+                }
+            },
+            onNSURLSessionClick = {
+                isLoading = true
+                performNSURLSessionTestRequest("https://jsonplaceholder.typicode.com/posts") { _ ->
+                    isLoading = false
+                }
+            },
+            onApolloClick = {
+                isLoading = true
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+                    try {
+                        InspectoApolloRunner.executeQuery()
+                    } catch (_: Exception) {
                     } finally {
                         isLoading = false
                     }
@@ -160,8 +172,10 @@ fun App() {
             },
             onOpenInspecto = { launchInspecto() },
             onManualLogClick = {
-                val result = InspectoManualLogRunner.triggerManualLog()
-                showMessage(result, Color(0xFF64748B))
+                InspectoManualLogRunner.triggerManualLog()
+            },
+            onRequestNotificationPermission = {
+                Inspecto.requestNotificationPermission {}
             }
         )
     }
@@ -171,158 +185,347 @@ fun App() {
 @Composable
 internal fun InspectoDemoContent(
     isLoading: Boolean = false,
-    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
-    snackbarColor: Color = Color(0xFF2563EB),
-    snackbarContentColor: Color = Color.White,
     onUsersClick: () -> Unit = {},
     onPostsGetClick: () -> Unit = {},
     onPostsPostClick: () -> Unit = {},
+    onCommentsClick: () -> Unit = {},
+    onErr400Click: () -> Unit = {},
+    onErr500Click: () -> Unit = {},
     onOkHttpClick: () -> Unit = {},
     onNSURLSessionClick: () -> Unit = {},
     onApolloClick: () -> Unit = {},
-    onCommentsClick: () -> Unit = {},
     onOpenInspecto: () -> Unit = {},
-    onManualLogClick: () -> Unit = {}
+    onManualLogClick: () -> Unit = {},
+    onRequestNotificationPermission: () -> Unit = {}
 ) {
+    val logs by Inspecto.logs.collectAsStateWithLifecycle()
+    val totalCount = logs.size
+
+    var prevCount by remember { mutableStateOf(totalCount) }
+    val pulseScale = remember { Animatable(1f) }
+    val pulseBorderAlpha = remember { Animatable(0f) }
+
+    LaunchedEffect(totalCount) {
+        if (totalCount != prevCount) {
+            prevCount = totalCount
+            pulseScale.animateTo(1.35f, animationSpec = tween(120))
+            pulseScale.animateTo(1f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+            pulseBorderAlpha.animateTo(1f, animationSpec = tween(100))
+            pulseBorderAlpha.animateTo(0f, animationSpec = tween(400))
+        }
+    }
+
     MaterialTheme {
         Scaffold(
             topBar = {
                 CenterAlignedTopAppBar(
-                    title = { Text("Inspecto") },
+                    title = {
+                        Text("Inspecto Network Inspector", fontWeight = FontWeight.Bold)
+                    },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.primaryContainer,
                         titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 )
-            },
-            snackbarHost = {
-                SnackbarHost(hostState = snackbarHostState) { data ->
-                    Snackbar(
-                        snackbarData = data,
-                        containerColor = snackbarColor,
-                        contentColor = snackbarContentColor,
-                        shape = RoundedCornerShape(8.dp)
-                    )
-                }
             }
         ) { paddingValues ->
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center
+                    .padding(16.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Button(
-                        onClick = onOpenInspecto,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
+                    // HERO CARD
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        shape = RoundedCornerShape(4.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Open Inspecto", fontWeight = FontWeight.Bold)
-                    }
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                    Button(
-                        onClick = onUsersClick,
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Fetch Users (KTOR)", fontWeight = FontWeight.Bold)
-                    }
-
-                    Button(
-                        onClick = onPostsGetClick,
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0EA5E9)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Fetch Posts (KTOR - GET)", fontWeight = FontWeight.Bold)
-                    }
-
-                    Button(
-                        onClick = onPostsPostClick,
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Submit Post (KTOR - POST)", fontWeight = FontWeight.Bold)
-                    }
-
-                    if (isOkHttpSupported) {
-                        Button(
-                            onClick = onOkHttpClick,
-                            enabled = !isLoading,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
-                            modifier = Modifier.fillMaxWidth()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text("Fetch Posts (OkHttp)", fontWeight = FontWeight.Bold)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "Inspecto Dashboard",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                    Text(
+                                        text = "Captured Network Traffic",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                                    )
+                                }
+
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = RoundedCornerShape(4.dp),
+                                    border = BorderStroke(
+                                        width = (2 * pulseBorderAlpha.value).dp,
+                                        color = MaterialTheme.colorScheme.tertiary
+                                    ),
+                                    modifier = Modifier.scale(pulseScale.value)
+                                ) {
+                                    Text(
+                                        text = "$totalCount Calls",
+                                        color = MaterialTheme.colorScheme.onPrimary,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Button(
+                                    onClick = onOpenInspecto,
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    ),
+                                    shape = RoundedCornerShape(4.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Launch Inspecto", fontWeight = FontWeight.Bold)
+                                }
+
+                                IconButton(
+                                    onClick = onRequestNotificationPermission
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Notifications,
+                                        contentDescription = "Notification Settings",
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
                         }
-                    }
-
-                    if (isNSURLSessionSupported) {
-                        Button(
-                            onClick = onNSURLSessionClick,
-                            enabled = !isLoading,
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF59E0B)),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Fetch Posts (NSURLSession)", fontWeight = FontWeight.Bold)
-                        }
-                    }
-
-                    Button(
-                        onClick = onApolloClick,
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEC4899)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Fetch Posts (Apollo)", fontWeight = FontWeight.Bold)
-                    }
-
-                    Button(
-                        onClick = onCommentsClick,
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6)),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Fetch Comments (KTOR)", fontWeight = FontWeight.Bold)
-                    }
-
-                    OutlinedButton(
-                        onClick = onManualLogClick,
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Trigger Manual Log", fontWeight = FontWeight.Bold)
                     }
 
                     LinearProgressIndicator(
                         modifier = Modifier
                             .fillMaxWidth()
                             .alpha(if (isLoading) 1f else 0f)
-                            .padding(vertical = 4.dp)
                     )
+
+                    // SECTION 1: KTOR CALLS
+                    CategoryCard(
+                        title = "Ktor HTTP Client",
+                        icon = Icons.Default.Http,
+                        iconColor = Color(0xFF2563EB)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            DemoActionButton(
+                                text = "GET Users",
+                                color = Color(0xFF2563EB),
+                                enabled = !isLoading,
+                                onClick = onUsersClick,
+                                modifier = Modifier.weight(1f)
+                            )
+                            DemoActionButton(
+                                text = "GET Posts",
+                                color = Color(0xFF0EA5E9),
+                                enabled = !isLoading,
+                                onClick = onPostsGetClick,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            DemoActionButton(
+                                text = "POST Submit",
+                                color = Color(0xFF10B981),
+                                enabled = !isLoading,
+                                onClick = onPostsPostClick,
+                                modifier = Modifier.weight(1f)
+                            )
+                            DemoActionButton(
+                                text = "GET Comments",
+                                color = Color(0xFF8B5CF6),
+                                enabled = !isLoading,
+                                onClick = onCommentsClick,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    // SECTION 2: ERROR SIMULATION
+                    CategoryCard(
+                        title = "Error Triggers & Edge Cases",
+                        icon = Icons.Default.BugReport,
+                        iconColor = Color(0xFFE11D48)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            DemoActionButton(
+                                text = "Trigger 400 Error",
+                                color = Color(0xFFE11D48),
+                                enabled = !isLoading,
+                                onClick = onErr400Click,
+                                modifier = Modifier.weight(1f)
+                            )
+                            DemoActionButton(
+                                text = "Trigger 500 Error",
+                                color = Color(0xFF9333EA),
+                                enabled = !isLoading,
+                                onClick = onErr500Click,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    // SECTION 3: OTHER STACKS (OkHttp, NSURLSession, Apollo)
+                    CategoryCard(
+                        title = "Other Network Stacks",
+                        icon = Icons.Default.Code,
+                        iconColor = Color(0xFFF59E0B)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (isOkHttpSupported) {
+                                DemoActionButton(
+                                    text = "OkHttp / Retrofit Request",
+                                    color = Color(0xFFF59E0B),
+                                    enabled = !isLoading,
+                                    onClick = onOkHttpClick,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                            if (isNSURLSessionSupported) {
+                                DemoActionButton(
+                                    text = "iOS NSURLSession Request",
+                                    color = Color(0xFFF59E0B),
+                                    enabled = !isLoading,
+                                    onClick = onNSURLSessionClick,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                            DemoActionButton(
+                                text = "Apollo GraphQL Query",
+                                color = Color(0xFFEC4899),
+                                enabled = !isLoading,
+                                onClick = onApolloClick,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
+                    // SECTION 4: UTILITY & MANUAL LOGS
+                    CategoryCard(
+                        title = "Manual Logging & Tools",
+                        icon = Icons.Default.Speed,
+                        iconColor = Color(0xFF64748B)
+                    ) {
+                        OutlinedButton(
+                            onClick = onManualLogClick,
+                            enabled = !isLoading,
+                            shape = RoundedCornerShape(4.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Trigger Custom Manual Log", fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun CategoryCard(
+    title: String,
+    icon: ImageVector,
+    iconColor: Color,
+    content: @Composable () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            content()
+        }
+    }
+}
+
+@Composable
+private fun DemoActionButton(
+    text: String,
+    color: Color,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(containerColor = color),
+        shape = RoundedCornerShape(4.dp),
+        modifier = modifier
+    ) {
+        Text(
+            text = text,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold
+        )
     }
 }
 

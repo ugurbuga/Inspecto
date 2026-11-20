@@ -28,6 +28,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -42,7 +44,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.ugurbuga.inspecto.res.InspectoStrings
+import com.ugurbuga.inspecto.generated.resources.Res
+import com.ugurbuga.inspecto.generated.resources.app_title
+import com.ugurbuga.inspecto.generated.resources.no_network_calls_subtitle
+import com.ugurbuga.inspecto.generated.resources.no_network_calls_title
+import com.ugurbuga.inspecto.generated.resources.search_placeholder
 import com.ugurbuga.inspecto.ui.bottomsheets.FilterBottomSheet
 import com.ugurbuga.inspecto.ui.bottomsheets.SortBottomSheet
 import com.ugurbuga.inspecto.ui.components.HeaderStatsTable
@@ -50,6 +56,7 @@ import com.ugurbuga.inspecto.ui.components.TransactionCard
 import com.ugurbuga.inspecto.ui.components.noRippleClickable
 import com.ugurbuga.inspecto.ui.detail.InspectoDetailScreen
 import com.ugurbuga.inspecto.ui.theme.InspectoTheme
+import org.jetbrains.compose.resources.stringResource
 
 internal enum class InspectoSortOption(val label: String) {
     DATE_DESC("Date (Newest first)"),
@@ -73,10 +80,11 @@ private fun entryMatchesFilter(entry: InspectoLogEntry, filter: String): Boolean
 @Composable
 internal fun InspectoScreen(
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    forceDarkTheme: Boolean? = null
 ) {
     val systemDark = isSystemInDarkTheme()
-    var isDarkThemeOverride by remember { mutableStateOf<Boolean?>(null) }
+    var isDarkThemeOverride by remember { mutableStateOf<Boolean?>(forceDarkTheme) }
     val isDark = isDarkThemeOverride ?: systemDark
 
     InspectoTheme(isDarkTheme = isDark) {
@@ -103,6 +111,7 @@ private fun InspectoScreenContent(
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilters by remember { mutableStateOf<Set<String>>(emptySet()) }
     var filterMode by remember { mutableStateOf("AND") }
+    var urlDisplayMode by remember { mutableStateOf("FULL") }
     var sortOption by remember { mutableStateOf(InspectoSortOption.DATE_DESC) }
 
     var isFilterBottomSheetOpen by remember { mutableStateOf(false) }
@@ -170,10 +179,12 @@ private fun InspectoScreenContent(
         FilterBottomSheet(
             selectedFilters = selectedFilters,
             filterMode = filterMode,
+            urlDisplayMode = urlDisplayMode,
             isDarkTheme = isDarkTheme,
-            onApply = { filters, mode ->
+            onApply = { filters, mode, urlMode ->
                 selectedFilters = filters
                 filterMode = mode
+                urlDisplayMode = urlMode
             },
             onDismiss = { isFilterBottomSheetOpen = false }
         )
@@ -219,7 +230,7 @@ private fun InspectoScreenContent(
                         },
                         title = {
                             Text(
-                                text = InspectoStrings.APP_TITLE,
+                                text = stringResource(Res.string.app_title),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -257,7 +268,7 @@ private fun InspectoScreenContent(
                         textStyle = MaterialTheme.typography.bodySmall,
                         placeholder = {
                             Text(
-                                InspectoStrings.SEARCH_PLACEHOLDER,
+                                stringResource(Res.string.search_placeholder),
                                 style = MaterialTheme.typography.bodySmall
                             )
                         },
@@ -303,14 +314,14 @@ private fun InspectoScreenContent(
                                 )
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Text(
-                                    text = InspectoStrings.NO_NETWORK_CALLS_TITLE,
+                                    text = stringResource(Res.string.no_network_calls_title),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = InspectoStrings.NO_NETWORK_CALLS_SUBTITLE,
+                                    text = stringResource(Res.string.no_network_calls_subtitle),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textAlign = TextAlign.Center
@@ -328,7 +339,8 @@ private fun InspectoScreenContent(
                             items(sortedLogs, key = { it.id }) { entry ->
                                 TransactionCard(
                                     entry = entry,
-                                    onClick = { selectedEntry = entry }
+                                    onClick = { selectedEntry = entry },
+                                    urlDisplayMode = urlDisplayMode
                                 )
                             }
                         }
@@ -338,3 +350,42 @@ private fun InspectoScreenContent(
         }
     }
 }
+
+@Preview(name = "Inspecto List - Light")
+@Composable
+internal fun InspectoListLightPreview() {
+    LaunchedEffect(Unit) {
+        Inspecto.clear()
+        Inspecto.addLog(
+            url = "https://api.example.com/v1/users",
+            method = "GET",
+            statusCode = 200,
+            durationMs = 120L,
+            requestHeaders = mapOf("Authorization" to "Bearer token123"),
+            responseHeaders = mapOf("Content-Type" to "application/json"),
+            responseBody = "[{\"id\": 1, \"name\": \"John Doe\"}]",
+            tag = "Ktor"
+        )
+    }
+    InspectoScreen(onDismiss = {})
+}
+
+@Preview(name = "Inspecto List - Dark")
+@Composable
+internal fun InspectoListDarkPreview() {
+    LaunchedEffect(Unit) {
+        Inspecto.clear()
+        Inspecto.addLog(
+            url = "https://api.example.com/v1/users",
+            method = "GET",
+            statusCode = 200,
+            durationMs = 120L,
+            requestHeaders = mapOf("Authorization" to "Bearer token123"),
+            responseHeaders = mapOf("Content-Type" to "application/json"),
+            responseBody = "[{\"id\": 1, \"name\": \"John Doe\"}]",
+            tag = "Ktor"
+        )
+    }
+    InspectoScreen(onDismiss = {}, forceDarkTheme = true)
+}
+

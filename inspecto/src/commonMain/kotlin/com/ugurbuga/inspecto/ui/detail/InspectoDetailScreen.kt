@@ -21,9 +21,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.ugurbuga.inspecto.BackHandler
 import com.ugurbuga.inspecto.InspectoLogEntry
-import com.ugurbuga.inspecto.res.InspectoStrings
+import com.ugurbuga.inspecto.generated.resources.Res
+import com.ugurbuga.inspecto.generated.resources.overview_tab
+import com.ugurbuga.inspecto.generated.resources.request_tab
+import com.ugurbuga.inspecto.generated.resources.response_tab
 import com.ugurbuga.inspecto.shareText
+import com.ugurbuga.inspecto.ui.theme.InspectoDarkColorScheme
+import com.ugurbuga.inspecto.ui.theme.InspectoLightColorScheme
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +49,10 @@ internal fun InspectoDetailScreen(
 
     val clipboardManager = LocalClipboardManager.current
     var copiedMessage by remember { mutableStateOf<String?>(null) }
+
+    val overviewTab = stringResource(Res.string.overview_tab)
+    val requestTab = stringResource(Res.string.request_tab)
+    val responseTab = stringResource(Res.string.response_tab)
 
     Scaffold(
         topBar = {
@@ -68,9 +79,9 @@ internal fun InspectoDetailScreen(
                     actions = {
                         IconButton(onClick = {
                             val (text, label) = when (pagerState.currentPage) {
-                                0 -> entry.formattedOverview() to InspectoStrings.OVERVIEW_TAB
-                                1 -> entry.formattedRequestSection() to InspectoStrings.REQUEST_TAB
-                                2 -> entry.formattedResponseSection() to InspectoStrings.RESPONSE_TAB
+                                0 -> entry.formattedOverview() to overviewTab
+                                1 -> entry.formattedRequestSection() to requestTab
+                                2 -> entry.formattedResponseSection() to responseTab
                                 else -> "" to ""
                             }
                             if (text.isNotBlank()) {
@@ -109,11 +120,7 @@ internal fun InspectoDetailScreen(
                         .padding(horizontal = 16.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    val tabs = listOf(
-                        InspectoStrings.OVERVIEW_TAB,
-                        InspectoStrings.REQUEST_TAB,
-                        InspectoStrings.RESPONSE_TAB
-                    )
+                    val tabs = listOf(overviewTab, requestTab, responseTab)
                     tabs.forEachIndexed { index, title ->
                         val selected = pagerState.currentPage == index
                         Surface(
@@ -252,3 +259,58 @@ internal fun InspectoDetailScreen(
         }
     }
 }
+
+@Preview(name = "Inspecto Detail - Light")
+@Composable
+internal fun InspectoDetailLightPreview() {
+    val sampleEntry = InspectoLogEntry(
+        id = "1",
+        url = "https://api.example.com/v1/users",
+        method = "GET",
+        statusCode = 200,
+        durationMs = 120L,
+        requestHeaders = mapOf("Authorization" to "Bearer token123", "Accept" to "application/json"),
+        requestQueryParams = mapOf("page" to "1", "limit" to "10"),
+        requestBody = null,
+        responseHeaders = mapOf("Content-Type" to "application/json", "Cache-Control" to "no-cache"),
+        responseBody = "[\n  {\n    \"id\": 1,\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\"\n  }\n]",
+        responseSizeByte = 1042L,
+        tag = "Ktor"
+    )
+    MaterialTheme(colorScheme = InspectoLightColorScheme) {
+        InspectoDetailScreen(
+            entry = sampleEntry,
+            onBackClick = {},
+            isDarkTheme = false,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+
+@Preview(name = "Inspecto Detail - Dark")
+@Composable
+internal fun InspectoDetailDarkPreview() {
+    val sampleEntry = InspectoLogEntry(
+        id = "1",
+        url = "https://api.example.com/v1/users",
+        method = "GET",
+        statusCode = 200,
+        durationMs = 120L,
+        requestHeaders = mapOf("Authorization" to "Bearer token123", "Accept" to "application/json"),
+        requestQueryParams = mapOf("page" to "1", "limit" to "10"),
+        requestBody = null,
+        responseHeaders = mapOf("Content-Type" to "application/json", "Cache-Control" to "no-cache"),
+        responseBody = "[\n  {\n    \"id\": 1,\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\"\n  }\n]",
+        responseSizeByte = 1042L,
+        tag = "Ktor"
+    )
+    MaterialTheme(colorScheme = InspectoDarkColorScheme) {
+        InspectoDetailScreen(
+            entry = sampleEntry,
+            onBackClick = {},
+            isDarkTheme = true,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+}
+

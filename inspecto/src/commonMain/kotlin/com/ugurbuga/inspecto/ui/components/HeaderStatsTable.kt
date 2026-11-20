@@ -20,8 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import com.ugurbuga.inspecto.Inspecto
-import com.ugurbuga.inspecto.res.InspectoStrings
+import com.ugurbuga.inspecto.generated.resources.Res
+import com.ugurbuga.inspecto.generated.resources.avg_duration
+import com.ugurbuga.inspecto.generated.resources.errors
+import com.ugurbuga.inspecto.generated.resources.success_2xx
+import com.ugurbuga.inspecto.generated.resources.total_requests
+import com.ugurbuga.inspecto.ui.theme.InspectoLightColorScheme
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun HeaderStatsTable(
@@ -46,7 +53,7 @@ internal fun HeaderStatsTable(
         // Left: Table layout with 4 colored stat rows
         Surface(
             color = MaterialTheme.colorScheme.surfaceContainer,
-            shape = RoundedCornerShape(6.dp),
+            shape = RoundedCornerShape(4.dp),
             border = BorderStroke(
                 1.dp,
                 MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
@@ -66,7 +73,7 @@ internal fun HeaderStatsTable(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        InspectoStrings.TOTAL_REQUESTS,
+                        stringResource(Res.string.total_requests),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -86,7 +93,7 @@ internal fun HeaderStatsTable(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        InspectoStrings.SUCCESS_2XX,
+                        stringResource(Res.string.success_2xx),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF10B981)
@@ -106,7 +113,7 @@ internal fun HeaderStatsTable(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        InspectoStrings.ERRORS,
+                        stringResource(Res.string.errors),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFFEF4444)
@@ -126,7 +133,7 @@ internal fun HeaderStatsTable(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        InspectoStrings.AVG_DURATION,
+                        stringResource(Res.string.avg_duration),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Medium,
                         color = if (isDarkTheme) Color(0xFF38BDF8) else Color(0xFF0284C7)
@@ -141,74 +148,26 @@ internal fun HeaderStatsTable(
             }
         }
 
-        // Right: 2x2 Grid Square Action Icons with gap between Row 1 and Row 2 (Request 2)
+        // Right: 2x2 Grid Square Action Icons
         val iconButtonBg = if (isDarkTheme) Color(0xFF1E293B) else MaterialTheme.colorScheme.primaryContainer
-        val filterTint = if (isDarkTheme) Color(0xFF60A5FA) else MaterialTheme.colorScheme.primary
-        val sortTint = if (isDarkTheme) Color(0xFF60A5FA) else MaterialTheme.colorScheme.primary
-        val themeTint = if (isDarkTheme) Color(0xFFFBBF24) else MaterialTheme.colorScheme.primary
-        val clearTint = if (isDarkTheme) Color(0xFFF87171) else Color(0xFFE11D48)
+        val filterTint = if (isDarkTheme) Color(0xFF38BDF8) else Color(0xFF0284C7) // Blue
+        val sortTint = if (isDarkTheme) Color(0xFF34D399) else Color(0xFF059669) // Emerald / Teal
+        val themeTint = if (isDarkTheme) Color(0xFFFBBF24) else Color(0xFFD97706) // Amber / Yellow
+        val clearTint = if (isDarkTheme) Color(0xFFF87171) else Color(0xFFE11D48) // Rose / Red
 
         Column(
             modifier = Modifier.fillMaxHeight(),
             verticalArrangement = Arrangement.spacedBy(6.dp),
             horizontalAlignment = Alignment.End
         ) {
-            // Row 1: Filter & Sort
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                Surface(
-                    onClick = onOpenFilter,
-                    shape = RoundedCornerShape(6.dp),
-                    color = iconButtonBg,
-                    border = BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                    ),
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(1f)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Filled.FilterList,
-                            contentDescription = "Filter",
-                            tint = filterTint,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-                Surface(
-                    onClick = onOpenSort,
-                    shape = RoundedCornerShape(6.dp),
-                    color = iconButtonBg,
-                    border = BorderStroke(
-                        1.dp,
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                    ),
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .aspectRatio(1f)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            Icons.Filled.SwapVert,
-                            contentDescription = "Sort",
-                            tint = sortTint,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            }
-            // Row 2: Theme & Clear
+            // Row 1: Theme & Clear (Top Row)
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.weight(1f)
             ) {
                 Surface(
                     onClick = onToggleTheme,
-                    shape = RoundedCornerShape(6.dp),
+                    shape = RoundedCornerShape(4.dp),
                     color = iconButtonBg,
                     border = BorderStroke(
                         1.dp,
@@ -229,7 +188,7 @@ internal fun HeaderStatsTable(
                 }
                 Surface(
                     onClick = { Inspecto.clear() },
-                    shape = RoundedCornerShape(6.dp),
+                    shape = RoundedCornerShape(4.dp),
                     color = if (isDarkTheme) Color(0xFF7F1D1D).copy(alpha = 0.3f) else Color(0xFFFEF2F2),
                     border = BorderStroke(1.dp, clearTint.copy(alpha = 0.4f)),
                     modifier = Modifier
@@ -246,6 +205,73 @@ internal fun HeaderStatsTable(
                     }
                 }
             }
+            // Row 2: Filter & Sort (Bottom Row)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Surface(
+                    onClick = onOpenFilter,
+                    shape = RoundedCornerShape(4.dp),
+                    color = iconButtonBg,
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    ),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Filled.FilterList,
+                            contentDescription = "Filter",
+                            tint = filterTint,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+                Surface(
+                    onClick = onOpenSort,
+                    shape = RoundedCornerShape(4.dp),
+                    color = iconButtonBg,
+                    border = BorderStroke(
+                        1.dp,
+                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                    ),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Filled.SwapVert,
+                            contentDescription = "Sort",
+                            tint = sortTint,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(name = "Header Stats Table - Light")
+@Composable
+internal fun HeaderStatsTablePreview() {
+    MaterialTheme(colorScheme = InspectoLightColorScheme) {
+        Surface(modifier = Modifier.padding(16.dp)) {
+            HeaderStatsTable(
+                totalCount = 15,
+                successCount = 12,
+                errorCount = 3,
+                avgLatency = 145L,
+                isDarkTheme = false,
+                onOpenFilter = {},
+                onOpenSort = {},
+                onToggleTheme = {}
+            )
         }
     }
 }
