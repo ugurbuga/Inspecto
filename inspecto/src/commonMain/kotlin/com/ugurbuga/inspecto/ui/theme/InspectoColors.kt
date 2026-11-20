@@ -3,19 +3,19 @@ package com.ugurbuga.inspecto.ui.theme
 import androidx.compose.ui.graphics.Color
 
 object InspectoColors {
-    val SuccessGreen = Color(0xFF10B981)
-    val ErrorRed = Color(0xFFEF4444)
-    val WarningAmber = Color(0xFFF59E0B)
-    val InfoBlue = Color(0xFF0284C7)
-    val InfoBlueDark = Color(0xFF38BDF8)
+    // Status Colors (Green, Amber, Red)
+    val StatusSuccess2xx = Color(0xFF10B981) // Emerald Green
+    val StatusRedirect3xx = Color(0xFFF59E0B) // Amber Orange
+    val StatusError4xx5xx = Color(0xFFEF4444) // Rose Red
 
-    val GetMethod = Color(0xFF0284C7)
-    val PostMethod = Color(0xFF10B981)
-    val PutMethod = Color(0xFFF59E0B)
-    val DeleteMethod = Color(0xFFEF4444)
-    val PatchMethod = Color(0xFF8B5CF6)
-    val OptionsMethod = Color(0xFF6B7280)
-    val HeadMethod = Color(0xFF374151)
+    // Method Colors (Completely distinct from Green, Amber, Red)
+    val MethodGet = Color(0xFF0284C7)    // Sky Blue
+    val MethodPost = Color(0xFF0EA5E9)   // Deep Cyan / Electric Blue
+    val MethodPut = Color(0xFF8B5CF6)    // Violet / Purple
+    val MethodDelete = Color(0xFFEC4899) // Magenta / Pink
+    val MethodPatch = Color(0xFF6366F1)  // Indigo
+    val MethodOptions = Color(0xFF475569)// Slate Gray
+    val MethodHead = Color(0xFF334155)   // Dark Slate
 
     val TagKtor = Color(0xFF8B5CF6)
     val TagOkHttp = Color(0xFFF59E0B)

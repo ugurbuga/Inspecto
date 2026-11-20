@@ -7,7 +7,7 @@ import com.ugurbuga.inspecto.InspectoListLightPreview
 import com.ugurbuga.inspecto.ui.bottomsheets.FilterBottomSheetPreview
 import com.ugurbuga.inspecto.ui.bottomsheets.SortBottomSheetPreview
 import com.ugurbuga.inspecto.ui.components.HeaderStatsTablePreview
-import com.ugurbuga.inspecto.ui.components.TransactionCardPreview
+import com.ugurbuga.inspecto.ui.components.TransactionCardGet200Preview
 import com.ugurbuga.inspecto.ui.detail.DetailRowPreview
 import com.ugurbuga.inspecto.ui.detail.HeadersAndBodyTabContentPreview
 import com.ugurbuga.inspecto.ui.detail.InspectoDetailDarkPreview
@@ -41,7 +41,7 @@ internal fun InspectoPreviews_InspectoDetailDarkPreview() {
 @Preview(name = "Transaction Card - Light")
 @Composable
 internal fun InspectoPreviews_TransactionCardPreview() {
-    TransactionCardPreview()
+    TransactionCardGet200Preview()
 }
 
 @Preview(name = "Header Stats Table - Light")

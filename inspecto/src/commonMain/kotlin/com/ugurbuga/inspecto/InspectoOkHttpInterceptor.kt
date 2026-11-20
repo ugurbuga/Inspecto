@@ -15,7 +15,7 @@ object InspectoOkHttpInterceptor {
         requestBody: String? = null,
         responseHeaders: Map<String, String> = emptyMap(),
         responseBody: String? = null,
-        tag: String = "OkHttp"
+        tag: String = InspectoTag.OKHTTP
     ) {
         Inspecto.addLog(
             url = url,

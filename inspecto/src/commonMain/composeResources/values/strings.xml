@@ -25,6 +25,7 @@
     <!-- Search & Empty States                    -->
     <!-- ======================================== -->
     <string name="search_placeholder">Search URL, method, status, tag...</string>
+    <string name="search_in_text_placeholder">Search in text...</string>
     <string name="no_network_calls_title">No Network Calls Captured</string>
     <string name="no_network_calls_subtitle">HTTP requests and responses will be logged here in real-time.</string>
 
@@ -59,4 +60,36 @@
     <string name="copy_url">Copy URL</string>
     <string name="formatting_payload">Formatting payload...</string>
     <string name="empty_body">(Empty Body)</string>
+
+    <!-- ======================================== -->
+    <!-- Accessibility & Content Descriptions      -->
+    <!-- ======================================== -->
+    <string name="close_button_description">Close</string>
+    <string name="search_button_description">Search</string>
+    <string name="clear_button_description">Clear</string>
+    <string name="copy_button_description">Copy</string>
+    <string name="share_button_description">Share</string>
+    <string name="back_button_description">Back</string>
+    <string name="toggle_theme_description">Toggle Theme</string>
+    <string name="clear_logs_description">Clear Logs</string>
+    <string name="filter_button_description">Filter</string>
+    <string name="sort_button_description">Sort</string>
+    <string name="no_calls_description">No Calls</string>
+    <string name="previous_match_description">Previous Match</string>
+    <string name="next_match_description">Next Match</string>
+    <string name="close_search_description">Close Search</string>
+    <string name="expand_description">Expand</string>
+
+    <!-- ======================================== -->
+    <!-- Toast & Feedback Messages               -->
+    <!-- ======================================== -->
+    <string name="copied_overview_details">Overview details copied!</string>
+    <string name="copied_request_headers">Request Headers copied!</string>
+    <string name="copied_query_params">Query Parameters copied!</string>
+    <string name="copied_request_payload">Request Payload copied!</string>
+    <string name="copied_response_headers">Response Headers copied!</string>
+    <string name="copied_response_payload">Response Payload copied!</string>
+    <string name="copied_curl_command">cURL command copied!</string>
+    <string name="copied_request_url">Request URL copied!</string>
+    <string name="opening_share_sheet">Opening share sheet...</string>
 </resources>

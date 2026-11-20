@@ -69,7 +69,7 @@ object Inspecto {
         requestBody: String? = null,
         responseHeaders: Map<String, String> = emptyMap(),
         responseBody: String? = null,
-        tag: String = "HTTP"
+        tag: String = InspectoTag.DEFAULT
     ) {
         val entry = InspectoLogEntry(
             id = generateUniqueId(),

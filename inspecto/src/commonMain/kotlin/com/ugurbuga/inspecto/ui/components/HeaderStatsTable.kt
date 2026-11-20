@@ -1,14 +1,10 @@
 package com.ugurbuga.inspecto.ui.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +23,13 @@ import com.ugurbuga.inspecto.generated.resources.avg_duration
 import com.ugurbuga.inspecto.generated.resources.errors
 import com.ugurbuga.inspecto.generated.resources.success_2xx
 import com.ugurbuga.inspecto.generated.resources.total_requests
+import com.ugurbuga.inspecto.generated.resources.ic_dark_mode
+import com.ugurbuga.inspecto.generated.resources.ic_delete
+import com.ugurbuga.inspecto.generated.resources.ic_filter_list
+import com.ugurbuga.inspecto.generated.resources.ic_light_mode
+import com.ugurbuga.inspecto.generated.resources.ic_swap_vert
 import com.ugurbuga.inspecto.ui.theme.InspectoLightColorScheme
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -37,6 +39,7 @@ internal fun HeaderStatsTable(
     errorCount: Int,
     avgLatency: Long,
     isDarkTheme: Boolean,
+    isFilterActive: Boolean = false,
     onOpenFilter: () -> Unit,
     onOpenSort: () -> Unit,
     onToggleTheme: () -> Unit,
@@ -56,7 +59,7 @@ internal fun HeaderStatsTable(
             shape = RoundedCornerShape(4.dp),
             border = BorderStroke(
                 1.dp,
-                MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+                if (isFilterActive) MaterialTheme.colorScheme.primary.copy(alpha = 0.6f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
             ),
             modifier = Modifier
                 .weight(1f)
@@ -70,14 +73,27 @@ internal fun HeaderStatsTable(
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        stringResource(Res.string.total_requests),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            stringResource(Res.string.total_requests),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (isFilterActive) {
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            )
+                        }
+                    }
                     Text(
                         "$totalCount",
                         style = MaterialTheme.typography.labelMedium,
@@ -90,14 +106,27 @@ internal fun HeaderStatsTable(
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        stringResource(Res.string.success_2xx),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF10B981)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            stringResource(Res.string.success_2xx),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF10B981)
+                        )
+                        if (isFilterActive) {
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            )
+                        }
+                    }
                     Text(
                         "$successCount",
                         style = MaterialTheme.typography.labelMedium,
@@ -110,14 +139,27 @@ internal fun HeaderStatsTable(
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        stringResource(Res.string.errors),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFFEF4444)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            stringResource(Res.string.errors),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFFEF4444)
+                        )
+                        if (isFilterActive) {
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            )
+                        }
+                    }
                     Text(
                         "$errorCount",
                         style = MaterialTheme.typography.labelMedium,
@@ -130,14 +172,27 @@ internal fun HeaderStatsTable(
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        stringResource(Res.string.avg_duration),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = if (isDarkTheme) Color(0xFF38BDF8) else Color(0xFF0284C7)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            stringResource(Res.string.avg_duration),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = if (isDarkTheme) Color(0xFF38BDF8) else Color(0xFF0284C7)
+                        )
+                        if (isFilterActive) {
+                            Box(
+                                modifier = Modifier
+                                    .size(5.dp)
+                                    .background(MaterialTheme.colorScheme.primary, CircleShape)
+                            )
+                        }
+                    }
                     Text(
                         "${avgLatency}ms",
                         style = MaterialTheme.typography.labelMedium,
@@ -179,7 +234,7 @@ internal fun HeaderStatsTable(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            imageVector = if (isDarkTheme) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                            painter = painterResource(if (isDarkTheme) Res.drawable.ic_light_mode else Res.drawable.ic_dark_mode),
                             contentDescription = "Toggle Theme",
                             tint = themeTint,
                             modifier = Modifier.size(18.dp)
@@ -197,7 +252,7 @@ internal fun HeaderStatsTable(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Filled.Delete,
+                            painter = painterResource(Res.drawable.ic_delete),
                             contentDescription = "Clear Logs",
                             tint = clearTint,
                             modifier = Modifier.size(18.dp)
@@ -216,7 +271,7 @@ internal fun HeaderStatsTable(
                     color = iconButtonBg,
                     border = BorderStroke(
                         1.dp,
-                        MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                        if (isFilterActive) filterTint.copy(alpha = 0.8f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                     ),
                     modifier = Modifier
                         .fillMaxHeight()
@@ -224,11 +279,20 @@ internal fun HeaderStatsTable(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Filled.FilterList,
+                            painter = painterResource(Res.drawable.ic_filter_list),
                             contentDescription = "Filter",
                             tint = filterTint,
                             modifier = Modifier.size(18.dp)
                         )
+                        if (isFilterActive) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(3.dp)
+                                    .size(6.dp)
+                                    .background(filterTint, CircleShape)
+                            )
+                        }
                     }
                 }
                 Surface(
@@ -245,7 +309,7 @@ internal fun HeaderStatsTable(
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Filled.SwapVert,
+                            painter = painterResource(Res.drawable.ic_swap_vert),
                             contentDescription = "Sort",
                             tint = sortTint,
                             modifier = Modifier.size(18.dp)
@@ -268,6 +332,7 @@ internal fun HeaderStatsTablePreview() {
                 errorCount = 3,
                 avgLatency = 145L,
                 isDarkTheme = false,
+                isFilterActive = true,
                 onOpenFilter = {},
                 onOpenSort = {},
                 onToggleTheme = {}

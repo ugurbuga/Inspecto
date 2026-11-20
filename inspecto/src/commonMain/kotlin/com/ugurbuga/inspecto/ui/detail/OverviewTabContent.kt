@@ -6,8 +6,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -20,7 +18,12 @@ import com.ugurbuga.inspecto.InspectoLogEntry
 import com.ugurbuga.inspecto.generated.resources.Res
 import com.ugurbuga.inspecto.generated.resources.copy_curl
 import com.ugurbuga.inspecto.generated.resources.overview_details
+import com.ugurbuga.inspecto.generated.resources.ic_content_copy
 import com.ugurbuga.inspecto.ui.theme.InspectoLightColorScheme
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -31,6 +34,20 @@ internal fun OverviewTabContent(
     onCopyOverviewDetails: () -> Unit,
     onToast: (String) -> Unit = {}
 ) {
+    val formattedTimestamp = runCatching {
+        if (entry.timestampMs <= 0L) return@runCatching ""
+        val instant = Instant.fromEpochMilliseconds(entry.timestampMs)
+        val tz = runCatching { TimeZone.currentSystemDefault() }.getOrDefault(TimeZone.UTC)
+        val dt = instant.toLocalDateTime(tz)
+        val day = dt.dayOfMonth.toString().padStart(2, '0')
+        val month = dt.monthNumber.toString().padStart(2, '0')
+        val year = dt.year.toString()
+        val hour = dt.hour.toString().padStart(2, '0')
+        val minute = dt.minute.toString().padStart(2, '0')
+        val second = dt.second.toString().padStart(2, '0')
+        "$day.$month.$year $hour:$minute:$second"
+    }.getOrDefault("${entry.timestampMs}")
+
     SelectionContainer {
         Column(
             modifier = Modifier
@@ -68,7 +85,7 @@ internal fun OverviewTabContent(
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.ContentCopy,
+                                painter = painterResource(Res.drawable.ic_content_copy),
                                 contentDescription = "Copy URL",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
@@ -113,7 +130,7 @@ internal fun OverviewTabContent(
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.ContentCopy,
+                                painter = painterResource(Res.drawable.ic_content_copy),
                                 contentDescription = "Copy Overview Details",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
@@ -129,7 +146,7 @@ internal fun OverviewTabContent(
                     if (entry.tag.isNotBlank()) {
                         DetailRow("Tag", entry.tag, onToast)
                     }
-                    DetailRow("Timestamp", "${entry.timestampMs}", onToast)
+                    DetailRow("Timestamp", formattedTimestamp, onToast)
                 }
             }
 
@@ -140,7 +157,7 @@ internal fun OverviewTabContent(
                 modifier = Modifier.fillMaxWidth(0.5f)
             ) {
                 Icon(
-                    Icons.Filled.ContentCopy,
+                    painter = painterResource(Res.drawable.ic_content_copy),
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
                 )

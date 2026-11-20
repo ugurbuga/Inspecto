@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class InspectoLogEntry(
     val id: String = "",
     val url: String = "",
-    val method: String = "GET",
+    val method: String = InspectoMethod.GET,
     val statusCode: Int = 200,
     val durationMs: Long = 0L,
     val timestampMs: Long = 0L,
@@ -16,7 +16,7 @@ data class InspectoLogEntry(
     val responseHeaders: Map<String, String> = emptyMap(),
     val responseBody: String? = null,
     val responseSizeByte: Long = 0L,
-    val tag: String = "HTTP"
+    val tag: String = InspectoTag.DEFAULT
 ) {
     val isSuccess: Boolean
         get() = statusCode in 200..299
@@ -72,7 +72,7 @@ data class InspectoLogEntry(
     fun toFormattedLogText(prettyResponseBody: String? = null): String {
         val builder = StringBuilder()
         builder.appendLine("========================================")
-        builder.appendLine("INSPECTO LOG ENTRY")
+        builder.appendLine("INSPECTO")
         builder.appendLine("========================================")
 
         builder.appendLine("[OVERVIEW]")

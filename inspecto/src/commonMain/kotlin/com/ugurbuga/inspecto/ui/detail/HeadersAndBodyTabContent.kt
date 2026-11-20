@@ -14,18 +14,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -42,6 +35,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -52,6 +49,14 @@ import com.ugurbuga.inspecto.InspectoJsonSyntaxHighlighter
 import com.ugurbuga.inspecto.generated.resources.Res
 import com.ugurbuga.inspecto.generated.resources.empty_body
 import com.ugurbuga.inspecto.generated.resources.formatting_payload
+import com.ugurbuga.inspecto.generated.resources.ic_add
+import com.ugurbuga.inspecto.generated.resources.ic_close
+import com.ugurbuga.inspecto.generated.resources.ic_content_copy
+import com.ugurbuga.inspecto.generated.resources.ic_keyboard_arrow_down
+import com.ugurbuga.inspecto.generated.resources.ic_keyboard_arrow_up
+import com.ugurbuga.inspecto.generated.resources.ic_remove
+import com.ugurbuga.inspecto.generated.resources.ic_search
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import com.ugurbuga.inspecto.ui.components.noRippleClickable
 import com.ugurbuga.inspecto.ui.theme.InspectoLightColorScheme
@@ -101,13 +106,35 @@ internal fun HeadersAndBodyTabContent(
         }
     }
 
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
+    val focusRequester = remember { FocusRequester() }
+    val bodyListState = rememberLazyListState()
+
     LaunchedEffect(searchQuery) {
         currentMatchIndex = 0
+    }
+
+    LaunchedEffect(isSearchOpen) {
+        if (isSearchOpen) {
+            focusRequester.requestFocus()
+        }
+    }
+
+    LaunchedEffect(currentMatchIndex, matchingLineIndices) {
+        val targetIndex = matchingLineIndices.getOrNull(currentMatchIndex)
+        if (targetIndex != null) {
+            bodyListState.animateScrollToItem(targetIndex)
+        }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .noRippleClickable {
+                focusManager.clearFocus()
+                keyboardController?.hide()
+            }
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -134,7 +161,7 @@ internal fun HeadersAndBodyTabContent(
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.ContentCopy,
+                                painter = painterResource(Res.drawable.ic_content_copy),
                                 contentDescription = "Copy Query Parameters",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
@@ -142,7 +169,7 @@ internal fun HeadersAndBodyTabContent(
                         }
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
-                            imageVector = if (isQueryParamsExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                            painter = painterResource(if (isQueryParamsExpanded) Res.drawable.ic_keyboard_arrow_up else Res.drawable.ic_keyboard_arrow_down),
                             contentDescription = "Expand",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -197,7 +224,7 @@ internal fun HeadersAndBodyTabContent(
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.ContentCopy,
+                                painter = painterResource(Res.drawable.ic_content_copy),
                                 contentDescription = "Copy Headers",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
@@ -205,7 +232,7 @@ internal fun HeadersAndBodyTabContent(
                         }
                         Spacer(modifier = Modifier.width(4.dp))
                         Icon(
-                            imageVector = if (isHeadersExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                            painter = painterResource(if (isHeadersExpanded) Res.drawable.ic_keyboard_arrow_up else Res.drawable.ic_keyboard_arrow_down),
                             contentDescription = "Expand",
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -261,7 +288,7 @@ internal fun HeadersAndBodyTabContent(
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Search,
+                            painter = painterResource(Res.drawable.ic_search),
                             contentDescription = "Search in body",
                             tint = if (isSearchOpen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(16.dp)
@@ -276,7 +303,7 @@ internal fun HeadersAndBodyTabContent(
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Remove,
+                            painter = painterResource(Res.drawable.ic_remove),
                             contentDescription = "Decrease Font Size",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
@@ -298,7 +325,7 @@ internal fun HeadersAndBodyTabContent(
                         modifier = Modifier.size(28.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Add,
+                            painter = painterResource(Res.drawable.ic_add),
                             contentDescription = "Increase Font Size",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(16.dp)
@@ -308,7 +335,7 @@ internal fun HeadersAndBodyTabContent(
                     if (rawBody.isNotBlank()) {
                         IconButton(onClick = onCopyBody, modifier = Modifier.size(28.dp)) {
                             Icon(
-                                Icons.Filled.ContentCopy,
+                                painter = painterResource(Res.drawable.ic_content_copy),
                                 contentDescription = "Copy $sectionTitle Body",
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(16.dp)
@@ -347,7 +374,9 @@ internal fun HeadersAndBodyTabContent(
                             },
                             singleLine = true,
                             textStyle = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusRequester(focusRequester),
                             shape = RoundedCornerShape(4.dp)
                         )
 
@@ -374,7 +403,7 @@ internal fun HeadersAndBodyTabContent(
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                Icons.Filled.KeyboardArrowUp,
+                                painter = painterResource(Res.drawable.ic_keyboard_arrow_up),
                                 contentDescription = "Previous Match",
                                 modifier = Modifier.size(18.dp)
                             )
@@ -391,7 +420,7 @@ internal fun HeadersAndBodyTabContent(
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                Icons.Filled.KeyboardArrowDown,
+                                painter = painterResource(Res.drawable.ic_keyboard_arrow_down),
                                 contentDescription = "Next Match",
                                 modifier = Modifier.size(18.dp)
                             )
@@ -406,7 +435,7 @@ internal fun HeadersAndBodyTabContent(
                             modifier = Modifier.size(28.dp)
                         ) {
                             Icon(
-                                Icons.Filled.Close,
+                                painter = painterResource(Res.drawable.ic_close),
                                 contentDescription = "Close Search",
                                 modifier = Modifier.size(16.dp)
                             )
@@ -458,9 +487,19 @@ internal fun HeadersAndBodyTabContent(
                         else -> {
                             SelectionContainer {
                                 LazyColumn(
+                                    state = bodyListState,
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .heightIn(max = 500.dp)
+                                        .pointerInput(Unit) {
+                                            detectDragGestures(
+                                                onDragStart = {
+                                                    focusManager.clearFocus()
+                                                    keyboardController?.hide()
+                                                },
+                                                onDrag = { _, _ -> }
+                                            )
+                                        }
                                 ) {
                                     items(
                                         count = formattedLines.size,

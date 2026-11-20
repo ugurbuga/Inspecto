@@ -13,17 +13,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.ugurbuga.inspecto.Inspecto
 import com.ugurbuga.inspecto.generated.resources.Res
 import com.ugurbuga.inspecto.generated.resources.apply_filters
 import com.ugurbuga.inspecto.generated.resources.combination_mode
 import com.ugurbuga.inspecto.generated.resources.filter_requests_title
-import com.ugurbuga.inspecto.generated.resources.full_url
 import com.ugurbuga.inspecto.generated.resources.mode_and_desc
 import com.ugurbuga.inspecto.generated.resources.mode_or_desc
-import com.ugurbuga.inspecto.generated.resources.path_only
 import com.ugurbuga.inspecto.generated.resources.reset
 import com.ugurbuga.inspecto.generated.resources.select_chips
-import com.ugurbuga.inspecto.generated.resources.url_display_mode
 import com.ugurbuga.inspecto.ui.theme.InspectoLightColorScheme
 import com.ugurbuga.inspecto.ui.theme.InspectoTheme
 import org.jetbrains.compose.resources.stringResource
@@ -33,15 +32,24 @@ import org.jetbrains.compose.resources.stringResource
 internal fun FilterBottomSheet(
     selectedFilters: Set<String>,
     filterMode: String,
-    urlDisplayMode: String,
     isDarkTheme: Boolean,
-    onApply: (selectedFilters: Set<String>, filterMode: String, urlDisplayMode: String) -> Unit,
+    onApply: (selectedFilters: Set<String>, filterMode: String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var tempFilters by remember { mutableStateOf(selectedFilters) }
     var tempMode by remember { mutableStateOf(filterMode) }
-    var tempUrlMode by remember { mutableStateOf(urlDisplayMode) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val logs by Inspecto.logs.collectAsStateWithLifecycle()
+    val dynamicMethods = remember(logs) { logs.map { it.method.uppercase() }.distinct().sorted() }
+    val dynamicTags = remember(logs) { logs.map { it.tag }.filter { it.isNotBlank() && it != "HTTP" }.distinct().sorted() }
+
+    val availableFilters = remember(dynamicMethods, dynamicTags) {
+        mutableListOf("ALL", "2XX", "4XX", "5XX").apply {
+            addAll(dynamicMethods)
+            addAll(dynamicTags)
+        }.distinct()
+    }
 
     InspectoTheme(isDarkTheme = isDarkTheme) {
         ModalBottomSheet(
@@ -53,9 +61,9 @@ internal fun FilterBottomSheet(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .padding(start = 24.dp, end = 24.dp, top = 2.dp, bottom = 12.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // Header
                 Row(
@@ -75,47 +83,6 @@ internal fun FilterBottomSheet(
                 }
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f))
-
-                // URL Display Mode Card (Full URL vs Path Only)
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    Text(
-                        stringResource(Res.string.url_display_mode),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(4.dp))
-                            .padding(4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        listOf("FULL", "PATH").forEach { mode ->
-                            val selected = tempUrlMode == mode
-                            Surface(
-                                onClick = { tempUrlMode = mode },
-                                shape = RoundedCornerShape(4.dp),
-                                color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(40.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Text(
-                                        text = if (mode == "FULL") stringResource(Res.string.full_url) else stringResource(Res.string.path_only),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
 
                 // Combination Mode Card
                 Column(
@@ -158,7 +125,7 @@ internal fun FilterBottomSheet(
                     }
                 }
 
-                // Filter Chips Section
+                // Filter Chips Section (Static + Dynamic Methods & Tags)
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -170,9 +137,6 @@ internal fun FilterBottomSheet(
                         color = MaterialTheme.colorScheme.primary
                     )
 
-                    val availableFilters = listOf(
-                        "ALL", "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD", "2XX", "ERR", "SUCCESS"
-                    )
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -195,15 +159,15 @@ internal fun FilterBottomSheet(
                                 label = {
                                     Text(
                                         filter,
-                                        fontWeight = FontWeight.Normal
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     )
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                                     labelColor = MaterialTheme.colorScheme.onSurface,
-                                    selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                    selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                    selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                    selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary
                                 ),
                                 shape = RoundedCornerShape(4.dp)
                             )
@@ -215,7 +179,7 @@ internal fun FilterBottomSheet(
 
                 Button(
                     onClick = {
-                        onApply(tempFilters, tempMode, tempUrlMode)
+                        onApply(tempFilters, tempMode)
                         onDismiss()
                     },
                     modifier = Modifier
@@ -226,7 +190,7 @@ internal fun FilterBottomSheet(
                     Text(stringResource(Res.string.apply_filters), fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(4.dp))
             }
         }
     }
@@ -240,9 +204,8 @@ internal fun FilterBottomSheetPreview() {
             FilterBottomSheet(
                 selectedFilters = setOf("GET", "2XX"),
                 filterMode = "AND",
-                urlDisplayMode = "FULL",
                 isDarkTheme = false,
-                onApply = { _, _, _ -> },
+                onApply = { _, _ -> },
                 onDismiss = {}
             )
         }

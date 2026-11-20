@@ -55,7 +55,7 @@ object InspectoGraphQL {
             requestBody = formattedRequestBody,
             responseHeaders = mapOf("Content-Type" to "application/json"),
             responseBody = formattedResponseBody,
-            tag = "GraphQL"
+            tag = InspectoTag.GRAPHQL
         )
     }
 }

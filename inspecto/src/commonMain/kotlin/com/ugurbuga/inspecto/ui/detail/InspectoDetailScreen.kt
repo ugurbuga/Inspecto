@@ -6,10 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ContentCopy
-import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,10 +21,14 @@ import com.ugurbuga.inspecto.generated.resources.Res
 import com.ugurbuga.inspecto.generated.resources.overview_tab
 import com.ugurbuga.inspecto.generated.resources.request_tab
 import com.ugurbuga.inspecto.generated.resources.response_tab
+import com.ugurbuga.inspecto.generated.resources.ic_arrow_back
+import com.ugurbuga.inspecto.generated.resources.ic_content_copy
+import com.ugurbuga.inspecto.generated.resources.ic_share
 import com.ugurbuga.inspecto.shareText
 import com.ugurbuga.inspecto.ui.theme.InspectoDarkColorScheme
 import com.ugurbuga.inspecto.ui.theme.InspectoLightColorScheme
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 
@@ -61,7 +61,7 @@ internal fun InspectoDetailScreen(
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {
                             Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                painter = painterResource(Res.drawable.ic_arrow_back),
                                 contentDescription = "Back",
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
@@ -90,7 +90,7 @@ internal fun InspectoDetailScreen(
                             }
                         }) {
                             Icon(
-                                imageVector = Icons.Filled.ContentCopy,
+                                painter = painterResource(Res.drawable.ic_content_copy),
                                 contentDescription = "Copy Active Tab",
                                 tint = MaterialTheme.colorScheme.primary
                             )
@@ -102,7 +102,7 @@ internal fun InspectoDetailScreen(
                             copiedMessage = "Opening share sheet..."
                         }) {
                             Icon(
-                                imageVector = Icons.Filled.Share,
+                                painter = painterResource(Res.drawable.ic_share),
                                 contentDescription = "Share Log",
                                 tint = MaterialTheme.colorScheme.secondary
                             )
@@ -313,4 +313,3 @@ internal fun InspectoDetailDarkPreview() {
         )
     }
 }
-

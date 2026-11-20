@@ -11,14 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Inbox
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -28,20 +26,18 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ugurbuga.inspecto.generated.resources.Res
@@ -49,6 +45,9 @@ import com.ugurbuga.inspecto.generated.resources.app_title
 import com.ugurbuga.inspecto.generated.resources.no_network_calls_subtitle
 import com.ugurbuga.inspecto.generated.resources.no_network_calls_title
 import com.ugurbuga.inspecto.generated.resources.search_placeholder
+import com.ugurbuga.inspecto.generated.resources.ic_close
+import com.ugurbuga.inspecto.generated.resources.ic_search
+import com.ugurbuga.inspecto.generated.resources.ic_inbox
 import com.ugurbuga.inspecto.ui.bottomsheets.FilterBottomSheet
 import com.ugurbuga.inspecto.ui.bottomsheets.SortBottomSheet
 import com.ugurbuga.inspecto.ui.components.HeaderStatsTable
@@ -56,6 +55,7 @@ import com.ugurbuga.inspecto.ui.components.TransactionCard
 import com.ugurbuga.inspecto.ui.components.noRippleClickable
 import com.ugurbuga.inspecto.ui.detail.InspectoDetailScreen
 import com.ugurbuga.inspecto.ui.theme.InspectoTheme
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 internal enum class InspectoSortOption(val label: String) {
@@ -68,12 +68,18 @@ internal enum class InspectoSortOption(val label: String) {
 }
 
 private fun entryMatchesFilter(entry: InspectoLogEntry, filter: String): Boolean {
-    return when (filter) {
+    return when (filter.uppercase()) {
         "ALL" -> true
         "2XX" -> entry.statusCode in 200..299
+        "3XX" -> entry.statusCode in 300..399
+        "4XX" -> entry.statusCode in 400..499
+        "5XX" -> entry.statusCode in 500..599
         "ERR" -> entry.isError
         "SUCCESS" -> entry.isSuccess
-        else -> entry.method.equals(filter, ignoreCase = true)
+        else -> {
+            entry.method.equals(filter, ignoreCase = true) ||
+                    entry.tag.contains(filter, ignoreCase = true)
+        }
     }
 }
 
@@ -111,14 +117,13 @@ private fun InspectoScreenContent(
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilters by remember { mutableStateOf<Set<String>>(emptySet()) }
     var filterMode by remember { mutableStateOf("AND") }
-    var urlDisplayMode by remember { mutableStateOf("FULL") }
     var sortOption by remember { mutableStateOf(InspectoSortOption.DATE_DESC) }
 
     var isFilterBottomSheetOpen by remember { mutableStateOf(false) }
     var isSortBottomSheetOpen by remember { mutableStateOf(false) }
 
-    val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = androidx.compose.ui.platform.LocalFocusManager.current
+    val keyboardController = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
 
     BackHandler(enabled = selectedEntry != null) {
         selectedEntry = null
@@ -170,21 +175,22 @@ private fun InspectoScreenContent(
         }
     }
 
-    val totalCount = logs.size
-    val successCount = logs.count { it.isSuccess }
-    val errorCount = logs.count { it.isError }
-    val avgLatency = if (logs.isNotEmpty()) logs.map { it.durationMs }.average().toLong() else 0L
+    val isFilterActive = selectedFilters.isNotEmpty() && "ALL" !in selectedFilters
+    val displayLogs = if (isFilterActive || searchQuery.isNotBlank()) filteredLogs else logs
+
+    val totalCount = displayLogs.size
+    val successCount = displayLogs.count { it.isSuccess }
+    val errorCount = displayLogs.count { it.isError }
+    val avgLatency = if (displayLogs.isNotEmpty()) displayLogs.map { it.durationMs }.average().toLong() else 0L
 
     if (isFilterBottomSheetOpen) {
         FilterBottomSheet(
             selectedFilters = selectedFilters,
             filterMode = filterMode,
-            urlDisplayMode = urlDisplayMode,
             isDarkTheme = isDarkTheme,
-            onApply = { filters, mode, urlMode ->
+            onApply = { filters, mode ->
                 selectedFilters = filters
                 filterMode = mode
-                urlDisplayMode = urlMode
             },
             onDismiss = { isFilterBottomSheetOpen = false }
         )
@@ -222,7 +228,7 @@ private fun InspectoScreenContent(
                         navigationIcon = {
                             IconButton(onClick = onDismiss) {
                                 Icon(
-                                    imageVector = Icons.Filled.Close,
+                                    painter = painterResource(Res.drawable.ic_close),
                                     contentDescription = "Close",
                                     tint = MaterialTheme.colorScheme.onSurface
                                 )
@@ -254,6 +260,7 @@ private fun InspectoScreenContent(
                         errorCount = errorCount,
                         avgLatency = avgLatency,
                         isDarkTheme = isDarkTheme,
+                        isFilterActive = isFilterActive,
                         onOpenFilter = { isFilterBottomSheetOpen = true },
                         onOpenSort = { isSortBottomSheetOpen = true },
                         onToggleTheme = onToggleTheme
@@ -274,7 +281,7 @@ private fun InspectoScreenContent(
                         },
                         leadingIcon = {
                             Icon(
-                                Icons.Filled.Search,
+                                painter = painterResource(Res.drawable.ic_search),
                                 contentDescription = "Search",
                                 modifier = Modifier.size(16.dp)
                             )
@@ -286,7 +293,7 @@ private fun InspectoScreenContent(
                                     modifier = Modifier.size(24.dp)
                                 ) {
                                     Icon(
-                                        Icons.Filled.Clear,
+                                        painter = painterResource(Res.drawable.ic_close),
                                         contentDescription = "Clear",
                                         modifier = Modifier.size(16.dp)
                                     )
@@ -307,7 +314,7 @@ private fun InspectoScreenContent(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(
-                                    imageVector = Icons.Filled.Inbox,
+                                    painter = painterResource(Res.drawable.ic_inbox),
                                     contentDescription = "No Calls",
                                     tint = MaterialTheme.colorScheme.outline,
                                     modifier = Modifier.size(48.dp)
@@ -328,6 +335,7 @@ private fun InspectoScreenContent(
                                 )
                             }
                         }
+
                     } else {
                         LazyColumn(
                             contentPadding = PaddingValues(12.dp),
@@ -335,12 +343,20 @@ private fun InspectoScreenContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
+                                .pointerInput(Unit) {
+                                    detectDragGestures(
+                                        onDragStart = {
+                                            focusManager.clearFocus()
+                                            keyboardController?.hide()
+                                        },
+                                        onDrag = { _, _ -> }
+                                    )
+                                }
                         ) {
                             items(sortedLogs, key = { it.id }) { entry ->
                                 TransactionCard(
                                     entry = entry,
-                                    onClick = { selectedEntry = entry },
-                                    urlDisplayMode = urlDisplayMode
+                                    onClick = { selectedEntry = entry }
                                 )
                             }
                         }
@@ -388,4 +404,3 @@ internal fun InspectoListDarkPreview() {
     }
     InspectoScreen(onDismiss = {}, forceDarkTheme = true)
 }
-

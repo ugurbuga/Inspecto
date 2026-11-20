@@ -17,7 +17,7 @@ import androidx.core.content.ContextCompat
 
 actual object InspectoNotification {
     private const val CHANNEL_ID = "inspecto_network_calls_channel"
-    private const val CHANNEL_NAME = "Inspecto Traffic Monitor"
+    private const val CHANNEL_NAME = "Inspecto"
     private const val NOTIFICATION_ID = 8821
 
     private val recentRequests = mutableListOf<InspectoLogEntry>()
@@ -37,7 +37,7 @@ actual object InspectoNotification {
                 CHANNEL_NAME,
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "Inspecto real-time network traffic & performance monitor"
+                description = "Inspecto network traffic & performance monitor"
             }
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
             manager?.createNotificationChannel(channel)
@@ -88,13 +88,8 @@ actual object InspectoNotification {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val successCount = recentRequests.count { it.isSuccess }
-        val errorCount = recentRequests.count { it.isError }
-        val summaryText = "Success: $successCount • Errors: $errorCount • Last: ${entry.method} ${entry.statusCode}"
-
         val inboxStyle = NotificationCompat.InboxStyle()
-            .setBigContentTitle("Inspecto Traffic Monitor")
-            .setSummaryText(summaryText)
+            .setBigContentTitle("Inspecto")
 
         synchronized(recentRequests) {
             recentRequests.forEach { req ->
@@ -128,13 +123,15 @@ actual object InspectoNotification {
                     )
                 }
 
-                // 3. Color method (GET/POST/PUT/DELETE)
+                // 3. Color method (Matching in-app InspectoColors)
                 val methodColor = when (req.method.uppercase()) {
-                    "GET" -> Color.parseColor("#0284C7")
-                    "POST" -> Color.parseColor("#10B981")
-                    "PUT" -> Color.parseColor("#F59E0B")
-                    "DELETE" -> Color.parseColor("#EF4444")
-                    "PATCH" -> Color.parseColor("#8B5CF6")
+                    InspectoMethod.GET -> Color.parseColor("#0284C7")
+                    InspectoMethod.POST -> Color.parseColor("#0EA5E9")
+                    InspectoMethod.PUT -> Color.parseColor("#8B5CF6")
+                    InspectoMethod.DELETE -> Color.parseColor("#EC4899")
+                    InspectoMethod.PATCH -> Color.parseColor("#6366F1")
+                    InspectoMethod.OPTIONS -> Color.parseColor("#475569")
+                    InspectoMethod.HEAD -> Color.parseColor("#334155")
                     else -> Color.parseColor("#6B7280")
                 }
                 val methodIndex = text.indexOf(req.method)
@@ -155,16 +152,17 @@ actual object InspectoNotification {
         val contentText = if (firstReq != null) {
             "${firstReq.statusCode} ${firstReq.method} ${firstReq.path}"
         } else {
-            summaryText
+            "Inspecto Network Monitor"
         }
 
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.stat_notify_sync)
-            .setContentTitle("Inspecto Traffic Monitor")
+            .setContentTitle("Inspecto")
             .setContentText(contentText)
             .setStyle(inboxStyle)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
+            .setOngoing(false) // Allow swipe to dismiss
+            .setAutoCancel(true)
             .setOnlyAlertOnce(true)
             .setContentIntent(pendingIntent)
             .addAction(android.R.drawable.ic_menu_view, "OPEN", pendingIntent)

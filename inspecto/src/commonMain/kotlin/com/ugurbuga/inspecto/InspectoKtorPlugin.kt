@@ -38,7 +38,7 @@ val InspectoKtorLogging = createClientPlugin("InspectoKtorLogging") {
             requestQueryParams = queryParams,
             responseHeaders = responseHeaders,
             responseBody = responseBody,
-            tag = "Ktor"
+            tag = InspectoTag.KTOR
         )
     }
 }

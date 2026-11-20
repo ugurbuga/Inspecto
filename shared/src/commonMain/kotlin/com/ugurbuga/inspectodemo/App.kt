@@ -5,6 +5,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -471,6 +472,15 @@ private fun CategoryCard(
     iconColor: Color,
     content: @Composable () -> Unit
 ) {
+    val isDark = isSystemInDarkTheme()
+    val adjustedIconColor = when (iconColor) {
+        Color(0xFF2563EB) -> if (isDark) Color(0xFF60A5FA) else Color(0xFF1D4ED8)
+        Color(0xFFE11D48) -> if (isDark) Color(0xFFF87171) else Color(0xFFBE123C)
+        Color(0xFFF59E0B) -> if (isDark) Color(0xFFFBBF24) else Color(0xFFB45309)
+        Color(0xFF64748B) -> if (isDark) Color(0xFF94A3B8) else Color(0xFF334155)
+        else -> if (isDark) iconColor.copy(red = 1f, green = 1f, blue = 1f) else iconColor
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(4.dp),
@@ -491,7 +501,7 @@ private fun CategoryCard(
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
-                    tint = iconColor,
+                    tint = adjustedIconColor,
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
