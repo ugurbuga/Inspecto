@@ -4,6 +4,19 @@
 
 ---
 
+## 📱 Visual Showcase & Screenshots
+
+| Light Mode | Dark Mode |
+| :---: | :---: |
+| **Request List**<br>![List Light](images/list_light.png) | **Request List**<br>![List Dark](images/list_dark.png) |
+| **Filter Requests**<br>![Filter Light](images/filter_light.png) | **Filter Requests**<br>![Filter Dark](images/filter_dark.png) |
+| **Sort Requests**<br>![Sort Light](images/sort_light.png) | **Sort Requests**<br>![Sort Dark](images/sort_dark.png) |
+| **Overview Details**<br>![Overview Light](images/overview_light.png) | **Overview Details**<br>![Overview Dark](images/overview_dark.png) |
+| **Request Headers & Body**<br>![Request Light](images/request_light.png) | **Request Headers & Body**<br>![Request Dark](images/request_dark.png) |
+| **Response Headers & Body**<br>![Response Light](images/response_light.png) | **Response Headers & Body**<br>![Response Dark](images/response_dark.png) |
+
+---
+
 ## 🚀 Step-by-Step Integration & Usage Guide
 
 ### 1. Installation
@@ -167,7 +180,7 @@ Inspecto.addLog(
 ## ✨ Key Features
 
 - **Multiplatform (KMP)**: Full support for Android, iOS, Desktop JVM, and Web.
-- **Advanced Filtering & Search**: Filter requests by HTTP Method (`GET`, `POST`, `PUT`, `DELETE`, `GraphQL`), Status (`2XX`, `Success`, `Errors`), or search by URL/tag.
+- **Advanced Filtering & Search**: Filter requests by HTTP Method (`GET`, `POST`, `PUT`, `DELETE`, `GraphQL`), Status (`2XX`, `4XX`, `5XX`), or search by URL/tag.
 - **JSON Beautifier**: Automatically pretty-prints and indents JSON request and response bodies.
 - **cURL Export**: One-tap copy cURL command for any captured network transaction.
 - **Theme-Aware Status Bar**: Dynamically synchronizes Android system status bar color with the app's topbar/surface color.
